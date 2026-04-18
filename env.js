@@ -6,7 +6,7 @@
 
 window.ENV = {
   /* URL base da API backend — sem barra no final */
-  API_BASE: 'https://backend-loja.pgl-m.com',
+  API_BASE: 'https://backend-loja.pgl-m.com', /* loja backend */
 
   /* Nome da aplicação */
   APP_NAME: 'PGLM Gift Cards',
