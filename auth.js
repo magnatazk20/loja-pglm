@@ -25,14 +25,10 @@ if (getSession()) {
 /* ── toggle senha visível ─────────────────────────────────── */
 document.querySelectorAll('.toggle-pass').forEach(btn => {
   btn.addEventListener('click', () => {
-    const targetId = btn.dataset.target;
-    const input    = document.getElementById(targetId);
+    const input = document.getElementById(btn.dataset.target);
     if (!input) return;
-
     const isPass = input.type === 'password';
-    input.type   = isPass ? 'text' : 'password';
-
-    /* troca ícone */
+    input.type = isPass ? 'text' : 'password';
     btn.innerHTML = isPass
       ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
            <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -51,7 +47,7 @@ function showFeedback(msg, type = 'error') {
   const el = document.getElementById('auth-feedback');
   if (!el) return;
   el.textContent = msg;
-  el.className   = `auth-feedback fb-${type}`;
+  el.className = `auth-feedback fb-${type}`;
   el.style.display = 'block';
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -61,17 +57,21 @@ function hideFeedback() {
 }
 
 function setLoading(btn, loading) {
-  const txt = btn.querySelector('.auth-btn-text');
+  const txt  = btn.querySelector('.auth-btn-text');
   const spin = btn.querySelector('.auth-spinner');
   btn.disabled = loading;
-  if (txt)  txt.style.display  = loading ? 'none'  : '';
+  if (txt)  txt.style.display  = loading ? 'none' : '';
   if (spin) spin.style.display = loading ? 'inline-block' : 'none';
 }
 
 function markError(inputId, hasError) {
   const el = document.getElementById(inputId);
-  if (!el) return;
-  el.classList.toggle('error', hasError);
+  if (el) el.classList.toggle('error', hasError);
+}
+
+/* limpa o telefone deixando só números */
+function cleanPhone(v) {
+  return v.replace(/\D/g, '');
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -83,18 +83,17 @@ if (loginForm) {
     e.preventDefault();
     hideFeedback();
 
-    const emailEl = document.getElementById('login-email');
+    const phoneEl = document.getElementById('login-phone');
     const passEl  = document.getElementById('login-password');
     const btn     = document.getElementById('loginBtn');
 
-    const email    = emailEl.value.trim();
+    const phone    = cleanPhone(phoneEl.value);
     const password = passEl.value;
 
-    /* validação básica */
     let valid = true;
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      markError('login-email', true); valid = false;
-    } else { markError('login-email', false); }
+    if (!phone || phone.length < 10) {
+      markError('login-phone', true); valid = false;
+    } else { markError('login-phone', false); }
 
     if (!password || password.length < 6) {
       markError('login-password', true); valid = false;
@@ -111,12 +110,12 @@ if (loginForm) {
       const res  = await fetch(`${API_BASE}/api/auth/login`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email, password }),
+        body:    JSON.stringify({ phone, password }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        showFeedback(data.error || data.message || 'E-mail ou senha incorretos.');
+        showFeedback(data.error || data.message || 'Telefone ou senha incorretos.');
         return;
       }
 
@@ -126,14 +125,13 @@ if (loginForm) {
 
     } catch (err) {
       console.error(err);
-      showFeedback('Erro de conexão. Tente novamente.');
+      showFeedback('Erro de conexão. Verifique sua internet e tente novamente.');
     } finally {
       setLoading(btn, false);
     }
   });
 
-  /* limpa erro ao digitar */
-  document.getElementById('login-email')?.addEventListener('input', () => markError('login-email', false));
+  document.getElementById('login-phone')?.addEventListener('input',    () => markError('login-phone', false));
   document.getElementById('login-password')?.addEventListener('input', () => markError('login-password', false));
 }
 
@@ -147,27 +145,26 @@ if (registerForm) {
     hideFeedback();
 
     const nameEl    = document.getElementById('reg-name');
-    const emailEl   = document.getElementById('reg-email');
+    const phoneEl   = document.getElementById('reg-phone');
     const passEl    = document.getElementById('reg-password');
     const confirmEl = document.getElementById('reg-confirm');
     const termsEl   = document.getElementById('reg-terms');
     const btn       = document.getElementById('registerBtn');
 
     const name     = nameEl.value.trim();
-    const email    = emailEl.value.trim();
+    const phone    = cleanPhone(phoneEl.value);
     const password = passEl.value;
     const confirm  = confirmEl.value;
 
-    /* validações */
     let valid = true;
 
     if (!name || name.length < 3) {
       markError('reg-name', true); valid = false;
     } else { markError('reg-name', false); }
 
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      markError('reg-email', true); valid = false;
-    } else { markError('reg-email', false); }
+    if (!phone || phone.length < 10) {
+      markError('reg-phone', true); valid = false;
+    } else { markError('reg-phone', false); }
 
     if (!password || password.length < 6) {
       markError('reg-password', true); valid = false;
@@ -175,11 +172,9 @@ if (registerForm) {
 
     if (password !== confirm) {
       markError('reg-confirm', true); valid = false;
-      if (valid !== false) showFeedback('As senhas não coincidem.');
     } else { markError('reg-confirm', false); }
 
     if (!termsEl.checked) {
-      valid = false;
       showFeedback('Você precisa aceitar os Termos de Uso para continuar.');
       return;
     }
@@ -195,7 +190,7 @@ if (registerForm) {
       const res  = await fetch(`${API_BASE}/api/auth/register`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, email, password }),
+        body:    JSON.stringify({ name, phone, password }),
       });
       const data = await res.json();
 
@@ -204,26 +199,25 @@ if (registerForm) {
         return;
       }
 
-      /* se o backend retornar token, faz login automático */
+      /* backend retorna token automaticamente */
       if (data.token && data.user) {
         saveSession(data.token, data.user);
         showFeedback('Conta criada! Redirecionando…', 'success');
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 900);
       } else {
-        showFeedback('Conta criada com sucesso! Faça login para continuar.', 'success');
+        showFeedback('Conta criada! Faça login para continuar.', 'success');
         setTimeout(() => { window.location.href = 'login.html'; }, 1400);
       }
 
     } catch (err) {
       console.error(err);
-      showFeedback('Erro de conexão. Tente novamente.');
+      showFeedback('Erro de conexão. Verifique sua internet e tente novamente.');
     } finally {
       setLoading(btn, false);
     }
   });
 
-  /* limpa erros ao digitar */
-  ['reg-name', 'reg-email', 'reg-password', 'reg-confirm'].forEach(id => {
+  ['reg-name', 'reg-phone', 'reg-password', 'reg-confirm'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', () => markError(id, false));
   });
 
@@ -231,10 +225,7 @@ if (registerForm) {
   document.getElementById('reg-confirm')?.addEventListener('input', () => {
     const pass    = document.getElementById('reg-password')?.value || '';
     const confirm = document.getElementById('reg-confirm')?.value  || '';
-    if (confirm && pass !== confirm) {
-      markError('reg-confirm', true);
-    } else {
-      markError('reg-confirm', false);
-    }
+    if (confirm && pass !== confirm) markError('reg-confirm', true);
+    else markError('reg-confirm', false);
   });
 }

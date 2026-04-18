@@ -79,15 +79,15 @@ function populateUserInfo() {
   const perfilEmailInp = document.getElementById('perfilEmail');
 
   if (sidebarAvatar) sidebarAvatar.textContent = ini;
-  if (sidebarName)   sidebarName.textContent   = user.name || '—';
-  if (sidebarEmail)  sidebarEmail.textContent  = user.email || '—';
+  if (sidebarName)   sidebarName.textContent   = user.name  || '—';
+  if (sidebarEmail)  sidebarEmail.textContent  = user.phone || user.email || '—';
   if (topbarAvatar)  topbarAvatar.textContent  = ini;
   if (greetName)     greetName.textContent     = (user.name || '').split(' ')[0] || '—';
   if (profileAvatar) profileAvatar.textContent = ini;
-  if (profileName)   profileName.textContent   = user.name || '—';
-  if (profileEmail)  profileEmail.textContent  = user.email || '—';
+  if (profileName)   profileName.textContent   = user.name  || '—';
+  if (profileEmail)  profileEmail.textContent  = user.phone || user.email || '—';
   if (perfilNameInp) perfilNameInp.value        = user.name  || '';
-  if (perfilEmailInp)perfilEmailInp.value       = user.email || '';
+  if (perfilEmailInp)perfilEmailInp.value       = user.phone || user.email || '';
 }
 
 /* ══════════════════════════════════════════════════════════
