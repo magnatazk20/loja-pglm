@@ -2,7 +2,7 @@
    PGLM — dashboard.js
    ═══════════════════════════════════════════════════════════ */
 
-const API_BASE = 'https://sua-api.com'; // troque pela URL real do backend
+const API_BASE = (window.ENV && window.ENV.API_BASE) || 'https://sua-api.com';
 
 /* ══════════════════════════════════════════════════════════
    SESSÃO

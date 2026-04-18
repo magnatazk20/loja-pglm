@@ -2,7 +2,7 @@
    PGLM — auth.js  (login + cadastro)
    ═══════════════════════════════════════════════════════════ */
 
-const API_BASE = 'https://sua-api.com'; // troque pela URL real do seu backend
+const API_BASE = (window.ENV && window.ENV.API_BASE) || 'https://sua-api.com';
 
 /* ── helpers ─────────────────────────────────────────────── */
 function saveSession(token, user) {
