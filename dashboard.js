@@ -160,9 +160,10 @@ let shopBalance = 0;
 
 async function loadBalance() {
   try {
-    const res  = await fetch(`${API_BASE}/api/shop/balance/${user.id}`, { headers: authHeaders() });
+    /* usa /api/user/summary/:id que já existe no backend e retorna shopBalance */
+    const res  = await fetch(`${API_BASE}/api/user/summary/${user.id}`, { headers: authHeaders() });
     const data = await res.json();
-    shopBalance = parseFloat(data.shopBalance ?? data.balance ?? 0);
+    shopBalance = parseFloat(data.shopBalance ?? 0);
   } catch {
     shopBalance = 0;
   }
@@ -182,6 +183,15 @@ async function loadBalanceHistory() {
 
   try {
     const res  = await fetch(`${API_BASE}/api/shop/balance/${user.id}/history`, { headers: authHeaders() });
+
+    /* endpoint pode não existir ainda — trata 404 graciosamente */
+    if (!res.ok) {
+      renderTxList(el, []);
+      const recentEl = document.getElementById('recentTransactions');
+      if (recentEl) renderTxList(recentEl, []);
+      return;
+    }
+
     const data = await res.json();
     const list = Array.isArray(data) ? data : (data.history ?? []);
 
@@ -200,7 +210,7 @@ async function loadBalanceHistory() {
 
   } catch (err) {
     console.error('Erro ao carregar histórico:', err);
-    el.innerHTML = '<div class="dash-empty"><p>Erro ao carregar histórico.</p></div>';
+    renderTxList(el, []);
   }
 }
 
@@ -239,8 +249,11 @@ let allGiftCards = [];
 async function loadGiftCards() {
   try {
     const res  = await fetch(`${API_BASE}/api/shop/giftcards/${user.id}`, { headers: authHeaders() });
-    const data = await res.json();
-    allGiftCards = Array.isArray(data) ? data : (data.giftcards ?? data.items ?? []);
+    if (!res.ok) { allGiftCards = []; }
+    else {
+      const data = await res.json();
+      allGiftCards = Array.isArray(data) ? data : (data.giftcards ?? data.items ?? []);
+    }
   } catch (err) {
     console.error('Erro ao carregar gift cards:', err);
     allGiftCards = [];
