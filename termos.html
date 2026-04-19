@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Termos de Compra — PGLM Gift Cards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .terms-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+    .terms-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text2);
+      font-size: .88rem;
+      font-weight: 600;
+      margin-bottom: 36px;
+      transition: color .18s;
+      text-decoration: none;
+    }
+    .terms-back:hover { color: var(--accent2); }
+    .terms-header {
+      margin-bottom: 40px;
+    }
+    .terms-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(99,102,241,.12);
+      border: 1px solid rgba(99,102,241,.25);
+      color: var(--accent2);
+      border-radius: 99px;
+      padding: 4px 14px;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .terms-title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .terms-subtitle {
+      color: var(--text2);
+      font-size: .95rem;
+      line-height: 1.6;
+    }
+    .terms-updated {
+      font-size: .78rem;
+      color: var(--text3);
+      margin-top: 8px;
+    }
+    .terms-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 36px 0;
+    }
+    .terms-section {
+      margin-bottom: 36px;
+    }
+    .terms-section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .terms-section-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .terms-section-icon.red    { background: rgba(239,68,68,.12);   color: #f87171; }
+    .terms-section-icon.yellow { background: rgba(245,158,11,.12);  color: #fbbf24; }
+    .terms-section-icon.blue   { background: rgba(99,102,241,.12);  color: #818cf8; }
+    .terms-section-icon.green  { background: rgba(16,185,129,.12);  color: #34d399; }
+    .terms-section-icon.purple { background: rgba(139,92,246,.12);  color: #a78bfa; }
+    .terms-section-icon.gray   { background: rgba(100,116,139,.12); color: #94a3b8; }
+    .terms-p {
+      color: var(--text2);
+      font-size: .92rem;
+      line-height: 1.75;
+      margin-bottom: 10px;
+    }
+    .terms-p:last-child { margin-bottom: 0; }
+    .terms-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .terms-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--text2);
+      font-size: .92rem;
+      line-height: 1.6;
+    }
+    .terms-list li::before {
+      content: '•';
+      color: var(--accent2);
+      font-weight: 900;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .terms-alert {
+      background: rgba(239,68,68,.08);
+      border: 1px solid rgba(239,68,68,.25);
+      border-left: 4px solid #ef4444;
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin: 20px 0;
+    }
+    .terms-alert-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .terms-alert-text {
+      color: #fca5a5;
+      font-size: .9rem;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+    .terms-alert-text strong { color: #f87171; }
+    .terms-note {
+      background: rgba(99,102,241,.07);
+      border: 1px solid rgba(99,102,241,.18);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: var(--text2);
+      font-size: .88rem;
+      line-height: 1.65;
+      margin: 16px 0;
+    }
+    .terms-card {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-top: 8px;
+    }
+    .terms-footer-note {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      text-align: center;
+      margin-top: 48px;
+    }
+    .terms-footer-note p {
+      color: var(--text2);
+      font-size: .88rem;
+      line-height: 1.7;
+    }
+    .terms-footer-note a {
+      color: var(--accent2);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    @media(max-width: 600px) {
+      .terms-title { font-size: 1.6rem; }
+      .terms-wrap  { padding: 40px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar simples -->
+  <nav style="border-bottom:1px solid rgba(255,255,255,.06);background:rgba(8,11,20,.9);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;height:60px">
+      <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none">
+        <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.95rem;color:#fff">PG</div>
+        <span style="font-weight:800;font-size:1rem;color:var(--text)">PGLM</span>
+      </a>
+      <a href="dashboard.html" style="font-size:.85rem;font-weight:600;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .18s" onmouseover="this.style.color='#818cf8'" onmouseout="this.style.color='var(--text2)'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Minha Conta
+      </a>
+    </div>
+  </nav>
+
+  <div class="terms-wrap">
+
+    <!-- Voltar -->
+    <a href="dashboard.html" class="terms-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12l7 7M5 12l7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Voltar ao painel
+    </a>
+
+    <!-- Header -->
+    <div class="terms-header">
+      <div class="terms-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Termos Oficiais
+      </div>
+      <h1 class="terms-title">Termos de Compra de Gift Cards</h1>
+      <p class="terms-subtitle">Leia atentamente antes de realizar qualquer compra na plataforma PGLM. Ao confirmar uma compra, você concorda com todos os termos descritos abaixo.</p>
+      <p class="terms-updated">Última atualização: Abril de 2026</p>
+    </div>
+
+    <hr class="terms-divider" />
+
+    <!-- ALERTA PRINCIPAL -->
+    <div class="terms-alert">
+      <span class="terms-alert-icon">🚫</span>
+      <div class="terms-alert-text">
+        <strong>Política de não reembolso:</strong> Todas as compras de gift cards realizadas na plataforma PGLM são <strong>definitivas e irreversíveis</strong>. Após a confirmação da compra e entrega do código, não é possível solicitar estorno, cancelamento ou reembolso sob nenhuma circunstância.
+      </div>
+    </div>
+
+    <hr class="terms-divider" />
+
+    <!-- 1. Natureza dos Gift Cards -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon blue">🎁</div>
+        1. Natureza dos Gift Cards
+      </div>
+      <p class="terms-p">Os gift cards comercializados na plataforma PGLM são códigos digitais de uso único destinados ao resgate em plataformas de terceiros (PlayStation Store, Steam, Xbox, Google Play, Amazon, entre outras).</p>
+      <ul class="terms-list">
+        <li>Cada código é válido para uso em uma única plataforma específica, conforme indicado na descrição do produto.</li>
+        <li>Os códigos possuem validade determinada pela plataforma emissora, que pode variar.</li>
+        <li>A PGLM atua como intermediária na venda dos códigos e não é responsável pelo funcionamento das plataformas de terceiros.</li>
+        <li>Os valores dos gift cards são fixos conforme anunciado e podem representar crédito em moeda local ou internacional.</li>
+      </ul>
+    </div>
+
+    <!-- 2. Política de Não Reembolso -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon red">🚫</div>
+        2. Política de Não Reembolso
+      </div>
+      <p class="terms-p">A PGLM adota uma política estrita de não reembolso para todas as compras de gift cards. Isso se deve à natureza digital e imediata do produto entregue.</p>
+      <div class="terms-card">
+        <ul class="terms-list">
+          <li><strong style="color:var(--text)">Sem arrependimento:</strong> Por se tratar de produto digital entregue imediatamente, não se aplica o direito de arrependimento previsto no Código de Defesa do Consumidor para compras fora do estabelecimento comercial.</li>
+          <li><strong style="color:var(--text)">Código já visualizado:</strong> Uma vez que o código é exibido na tela após a compra, a entrega é considerada concluída e não há possibilidade de estorno.</li>
+          <li><strong style="color:var(--text)">Código já resgatado:</strong> Caso o código tenha sido resgatado na plataforma de destino, qualquer solicitação de reembolso será automaticamente negada.</li>
+          <li><strong style="color:var(--text)">Saldo debitado:</strong> O saldo da loja utilizado na compra é debitado no momento da confirmação e não será restituído.</li>
+        </ul>
+      </div>
+      <div class="terms-note" style="margin-top:16px">
+        ℹ️ A única exceção é em casos onde o código entregue seja tecnicamente comprovado como inválido/defeituoso desde a origem. Nesses casos, entre em contato com o suporte em até <strong>24 horas</strong> após a compra.
+      </div>
+    </div>
+
+    <!-- 3. Processo de Compra -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon green">✅</div>
+        3. Processo de Compra
+      </div>
+      <p class="terms-p">O processo de compra na plataforma PGLM funciona da seguinte forma:</p>
+      <ul class="terms-list">
+        <li>O usuário seleciona o produto desejado e clica em "Comprar".</li>
+        <li>O sistema verifica o saldo disponível na conta do usuário.</li>
+        <li>Ao clicar em "Confirmar Compra", o valor é debitado automaticamente do saldo da loja.</li>
+        <li>O código do gift card é entregue imediatamente e fica disponível na seção "Meus Gift Cards".</li>
+        <li>O usuário recebe uma confirmação visual da compra com o código exibido.</li>
+      </ul>
+      <div class="terms-note">
+        💡 Verifique o saldo disponível antes de confirmar a compra. Compras com saldo insuficiente são automaticamente bloqueadas pelo sistema.
+      </div>
+    </div>
+
+    <!-- 4. Uso dos Códigos -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon purple">🔑</div>
+        4. Uso e Resgate dos Códigos
+      </div>
+      <p class="terms-p">Ao adquirir um gift card na PGLM, o usuário é o único responsável pelo uso correto do código recebido.</p>
+      <ul class="terms-list">
+        <li>Cada código é de uso único — após o primeiro resgate, o código torna-se inválido para novos usos.</li>
+        <li>O usuário deve resgatar o código somente na plataforma correta indicada na descrição do produto.</li>
+        <li>A PGLM não se responsabiliza por códigos utilizados de forma incorreta pelo usuário.</li>
+        <li>O usuário não deve compartilhar seu código com terceiros. Caso o código seja utilizado por outra pessoa antes do titular, a PGLM não poderá ser responsabilizada.</li>
+        <li>Mantenha o código em local seguro e não o exponha publicamente (redes sociais, capturas de tela públicas, etc.).</li>
+        <li>Alguns códigos podem ter restrições regionais (ex.: somente para uso no Brasil). Verifique a descrição do produto antes de comprar.</li>
+      </ul>
+    </div>
+
+    <!-- 5. Estoque e Disponibilidade -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon yellow">📦</div>
+        5. Estoque e Disponibilidade
+      </div>
+      <p class="terms-p">Os produtos da loja PGLM possuem estoque limitado, conforme indicado em cada card de produto.</p>
+      <ul class="terms-list">
+        <li>A quantidade disponível é atualizada em tempo real conforme as compras são realizadas.</li>
+        <li>Produtos com estoque zerado ficam automaticamente indisponíveis para compra.</li>
+        <li>A PGLM não garante a disponibilidade permanente de nenhum produto.</li>
+        <li>Os preços podem ser atualizados a qualquer momento sem aviso prévio.</li>
+      </ul>
+    </div>
+
+    <!-- 6. Saldo da Loja -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon green">💰</div>
+        6. Saldo da Loja
+      </div>
+      <p class="terms-p">O saldo disponível na plataforma PGLM é exclusivo para compras na loja e está sujeito às seguintes condições:</p>
+      <ul class="terms-list">
+        <li>O saldo não pode ser transferido para outros usuários.</li>
+        <li>O saldo não pode ser convertido em dinheiro ou retirado da plataforma.</li>
+        <li>O saldo é creditado conforme os termos acordados na aquisição do mesmo.</li>
+        <li>Saldos originados de créditos promocionais podem ter condições específicas de uso.</li>
+        <li>Em caso de encerramento da conta, o saldo não utilizado não será reembolsado.</li>
+      </ul>
+    </div>
+
+    <!-- 7. Responsabilidades -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon gray">⚖️</div>
+        7. Limitação de Responsabilidade
+      </div>
+      <p class="terms-p">A PGLM não se responsabiliza por:</p>
+      <ul class="terms-list">
+        <li>Falhas, interrupções ou indisponibilidade das plataformas de terceiros onde os códigos serão resgatados.</li>
+        <li>Alterações de política ou preços realizadas pelas plataformas emissoras dos gift cards.</li>
+        <li>Perda ou roubo de códigos após a entrega ao usuário.</li>
+        <li>Danos indiretos, incidentais ou consequentes resultantes do uso ou impossibilidade de uso dos gift cards.</li>
+        <li>Erros de digitação ou inserção do código pelo usuário na plataforma de destino.</li>
+      </ul>
+    </div>
+
+    <!-- 8. Suporte -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon blue">💬</div>
+        8. Suporte ao Cliente
+      </div>
+      <p class="terms-p">Em caso de problemas técnicos comprovados com um código recebido (código inválido na origem), o usuário deve:</p>
+      <ul class="terms-list">
+        <li>Entrar em contato com o suporte da PGLM em até <strong style="color:var(--text)">24 horas</strong> após a compra.</li>
+        <li>Fornecer comprovante da compra (número do pedido ou gift card ID).</li>
+        <li>Apresentar evidência de que o código é inválido (print de tela do erro na plataforma).</li>
+        <li>Aguardar análise da equipe, que pode levar até 3 dias úteis.</li>
+      </ul>
+      <div class="terms-note">
+        📩 Solicitações enviadas fora do prazo de 24 horas ou sem as evidências necessárias não serão analisadas.
+      </div>
+    </div>
+
+    <!-- 9. Aceitação -->
+    <div class="terms-section">
+      <div class="terms-section-title">
+        <div class="terms-section-icon purple">📋</div>
+        9. Aceitação dos Termos
+      </div>
+      <p class="terms-p">Ao realizar qualquer compra na plataforma PGLM, o usuário declara que:</p>
+      <ul class="terms-list">
+        <li>Leu, compreendeu e concorda com todos os termos descritos neste documento.</li>
+        <li>Tem capacidade legal para realizar compras online.</li>
+        <li>As informações da conta são verdadeiras e pertencem ao próprio usuário.</li>
+        <li>Reconhece a política de não reembolso e aceita que a compra é definitiva após a confirmação.</li>
+      </ul>
+    </div>
+
+    <hr class="terms-divider" />
+
+    <!-- Rodapé -->
+    <div class="terms-footer-note">
+      <p>
+        Estes termos podem ser atualizados a qualquer momento. Recomendamos verificar periodicamente esta página.<br />
+        Dúvidas? Entre em contato com nosso suporte pelo painel da sua conta.
+      </p>
+      <p style="margin-top:12px">
+        <a href="dashboard.html">← Voltar ao painel</a>
+        &nbsp;&nbsp;•&nbsp;&nbsp;
+        <a href="index.html">Página inicial</a>
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>
