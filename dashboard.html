@@ -283,15 +283,15 @@
               <input type="text" id="perfilName" name="name" placeholder="Seu nome completo" />
             </div>
             <div class="dash-form-field">
-              <label>E-mail</label>
-              <input type="email" id="perfilEmail" name="email" placeholder="seu@email.com" />
+              <label>Telefone / Login <span style="color:var(--text3,#64748b);font-size:0.78rem">(não pode ser alterado)</span></label>
+              <input type="text" id="perfilEmail" name="phone" placeholder="—" readonly style="opacity:.55;cursor:not-allowed;background:rgba(255,255,255,.03)" />
             </div>
             <div class="dash-form-sep">
               <span>Alterar senha</span>
             </div>
             <div class="dash-form-field">
-              <label>Nova senha <span style="color:var(--text3);font-size:0.78rem">(deixe em branco para não alterar)</span></label>
-              <input type="password" id="perfilPassword" name="password" placeholder="Nova senha (mín. 6 caracteres)" />
+              <label>Nova senha <span style="color:var(--text3,#64748b);font-size:0.78rem">(deixe em branco para não alterar)</span></label>
+              <input type="password" id="perfilPassword" name="password" placeholder="Nova senha (mín. 6 caracteres)" autocomplete="new-password" />
             </div>
             <button type="submit" class="auth-btn" style="max-width:220px">Salvar alterações</button>
           </form>

@@ -457,13 +457,17 @@ document.getElementById('perfilForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const nameVal  = document.getElementById('perfilName')?.value.trim() || '';
-  const emailVal = document.getElementById('perfilEmail')?.value.trim() || '';
   const passVal  = document.getElementById('perfilPassword')?.value || '';
   const feedEl   = document.getElementById('perfilFeedback');
   const btn      = e.target.querySelector('button[type="submit"]');
 
-  if (!nameVal || !emailVal) {
-    showPerfilFeedback('Preencha nome e e-mail.', 'error');
+  if (!nameVal) {
+    showPerfilFeedback('O nome é obrigatório.', 'error');
+    return;
+  }
+
+  if (passVal && passVal.length > 0 && passVal.length < 6) {
+    showPerfilFeedback('A senha deve ter pelo menos 6 caracteres.', 'error');
     return;
   }
 
@@ -471,14 +475,10 @@ document.getElementById('perfilForm')?.addEventListener('submit', async (e) => {
   btn.textContent = 'Salvando…';
 
   try {
-    const body = { name: nameVal, email: emailVal };
+    const body = { name: nameVal };
     if (passVal && passVal.length >= 6) body.password = passVal;
-    if (passVal && passVal.length > 0 && passVal.length < 6) {
-      showPerfilFeedback('A senha deve ter pelo menos 6 caracteres.', 'error');
-      return;
-    }
 
-    const res  = await fetch(`${API_BASE}/api/auth/profile`, {
+    const res  = await fetch(`${API_BASE}/api/user/profile`, {
       method:  'PUT',
       headers: authHeaders(),
       body:    JSON.stringify(body),
@@ -491,19 +491,17 @@ document.getElementById('perfilForm')?.addEventListener('submit', async (e) => {
     }
 
     /* atualiza sessão local */
-    const updatedUser = { ...user, name: nameVal, email: emailVal };
+    const updatedUser = { ...user, name: nameVal };
     localStorage.setItem('pglm_user', JSON.stringify(updatedUser));
 
     /* atualiza UI */
     const ini = initials(nameVal);
     document.getElementById('sidebarAvatar').textContent  = ini;
     document.getElementById('sidebarName').textContent    = nameVal;
-    document.getElementById('sidebarEmail').textContent   = emailVal;
     document.getElementById('topbarAvatar').textContent   = ini;
     document.getElementById('greetName').textContent      = nameVal.split(' ')[0];
     document.getElementById('profileAvatar').textContent  = ini;
     document.getElementById('profileName').textContent    = nameVal;
-    document.getElementById('profileEmail').textContent   = emailVal;
 
     if (passVal) document.getElementById('perfilPassword').value = '';
 
