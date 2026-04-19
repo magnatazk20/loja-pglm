@@ -293,7 +293,7 @@
               <label>Nova senha <span style="color:var(--text3,#64748b);font-size:0.78rem">(deixe em branco para não alterar)</span></label>
               <input type="password" id="perfilPassword" name="password" placeholder="Nova senha (mín. 6 caracteres)" autocomplete="new-password" />
             </div>
-            <button type="submit" class="auth-btn" style="max-width:220px">Salvar alterações</button>
+            <button type="submit" class="auth-btn">Salvar alterações</button>
           </form>
         </div>
       </div>
@@ -401,6 +401,13 @@
   .auth-feedback{border-radius:8px;padding:10px 14px;font-size:.84rem;font-weight:600;margin-top:8px}
   .auth-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171}
   .auth-success{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#34d399}
+  /* ── Botão salvar perfil ── */
+  .auth-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:.95rem;font-weight:800;cursor:pointer;transition:opacity .18s,transform .15s,box-shadow .18s;box-shadow:0 4px 20px rgba(99,102,241,.4);margin-top:4px;font-family:var(--font,inherit)}
+  .auth-btn:hover:not(:disabled){opacity:.9;transform:translateY(-1px);box-shadow:0 6px 28px rgba(99,102,241,.55)}
+  .auth-btn:active:not(:disabled){transform:scale(.98)}
+  .auth-btn:disabled{opacity:.5;cursor:not-allowed}
+  .auth-feedback.fb-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+  .auth-feedback.fb-success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
   /* ── Stock badges ── */
   .dash-shop-stock{font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap;letter-spacing:.02em}
   .dash-shop-stock-out{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2)}
