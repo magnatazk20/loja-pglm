@@ -332,7 +332,7 @@
               <h2>Concluir depósito</h2>
               <p>Escaneie o QR Code no seu banco ou copie o código PIX.</p>
             </div>
-            <span class="dep-status-chip">⏳ Aguardando pagamento</span>
+            <span id="depStatusChip" class="dep-status-chip dep-chip-pending">⏳ Aguardando pagamento</span>
           </div>
 
           <div class="dep-checkout-grid">
@@ -554,7 +554,11 @@
   .dep-bank-brand{font-size:.72rem;font-weight:700;color:var(--text3,#64748b);letter-spacing:.06em;margin-bottom:4px}
   .dep-checkout-header h2{font-size:1.25rem;font-weight:900;margin:0 0 4px;color:var(--text,#e2e8f0)}
   .dep-checkout-header p{font-size:.84rem;color:var(--text2,#94a3b8);margin:0}
-  .dep-status-chip{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fbbf24;font-size:.75rem;font-weight:700;border-radius:99px;padding:5px 12px;white-space:nowrap;align-self:flex-start;flex-shrink:0}
+  .dep-status-chip{font-size:.75rem;font-weight:700;border-radius:99px;padding:5px 12px;white-space:nowrap;align-self:flex-start;flex-shrink:0;transition:background .3s,color .3s,border-color .3s}
+  .dep-chip-pending{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#fbbf24}
+  .dep-chip-paid{background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);color:#34d399}
+  .dep-chip-processing{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);color:#a78bfa}
+  .dep-chip-expired{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171}
   .dep-checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
   @media(max-width:600px){.dep-checkout-grid{grid-template-columns:1fr}}
   .dep-qr-panel h3,.dep-pix-panel h3{font-size:.88rem;font-weight:700;color:var(--text2,#94a3b8);margin:0 0 14px}
@@ -748,10 +752,86 @@
 
     /* ── mostra/esconde painel ───────────────────────── */
     function _showPanel() {
+      _stopPolling();
       document.getElementById('depositPanel').style.display    = '';
       document.getElementById('depositCheckout').style.display = 'none';
     }
-    function _showCheckout(amount, txId, pixCode, qrImgB64) {
+    /* ── polling de status do depósito ──────────────── */
+    let _pollTimer    = null;
+    let _pollDepId    = null;
+    let _pollStopped  = false;
+
+    function _stopPolling() {
+      if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+      _pollStopped = true;
+    }
+
+    function _setChip(status) {
+      const chip = document.getElementById('depStatusChip');
+      if (!chip) return;
+      const st = String(status || 'pending').toLowerCase();
+      const map = {
+        'paid':           { cls: 'dep-chip-paid',       text: '✅ Pago' },
+        'payment.paid':   { cls: 'dep-chip-paid',       text: '✅ Pago' },
+        'pending':        { cls: 'dep-chip-pending',    text: '⏳ Aguardando pagamento' },
+        'created':        { cls: 'dep-chip-pending',    text: '⏳ Aguardando pagamento' },
+        'processing':     { cls: 'dep-chip-processing', text: '🔄 Processando…' },
+        'expired':        { cls: 'dep-chip-expired',    text: '❌ Expirado' },
+        'canceled':       { cls: 'dep-chip-expired',    text: '❌ Cancelado' },
+        'failed':         { cls: 'dep-chip-expired',    text: '❌ Falhou' },
+      };
+      const def = { cls: 'dep-chip-pending', text: '⏳ ' + st };
+      const cfg = map[st] || def;
+      chip.className = 'dep-status-chip ' + cfg.cls;
+      chip.textContent = cfg.text;
+    }
+
+    async function _pollStatus() {
+      if (_pollStopped || !_pollDepId) return;
+      const token = _getToken();
+      if (!token) return;
+      try {
+        const res  = await fetch(_API + '/api/shop/deposit/history?limit=30', {
+          headers: { 'Authorization': 'Bearer ' + token },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data?.deposits) return;
+
+        const dep = data.deposits.find(function(d) { return d.id === _pollDepId; });
+        if (!dep) return;
+
+        const st = String(dep.status || 'pending').toLowerCase();
+        _setChip(st);
+        _renderHistory(data.deposits);
+
+        const isPaid     = st === 'paid' || st === 'payment.paid';
+        const isTerminal = isPaid || st === 'expired' || st === 'canceled' || st === 'failed';
+
+        if (isTerminal) {
+          _stopPolling();
+          if (isPaid) {
+            /* mostra mensagem de sucesso no painel de histórico */
+            _showMsg('✅ Pagamento confirmado! Seu saldo foi creditado.', 'dep-msg-success');
+          }
+        }
+      } catch { /* silencia erros de rede no polling */ }
+    }
+
+    function _startPolling(depositId) {
+      _stopPolling();
+      _pollDepId   = depositId;
+      _pollStopped = false;
+      _setChip('pending');
+      /* polling a cada 5s, para automaticamente após 10min */
+      let ticks = 0;
+      _pollTimer = setInterval(function () {
+        ticks++;
+        if (ticks > 120) { _stopPolling(); return; } /* 10 min */
+        _pollStatus();
+      }, 5000);
+    }
+
+    function _showCheckout(amount, txId, pixCode, qrImgB64, depositId) {
       document.getElementById('depositPanel').style.display    = 'none';
       document.getElementById('depositCheckout').style.display = '';
 
@@ -781,8 +861,9 @@
         fallbackEl.style.display = '';
       }
 
-      /* recarrega histórico para mostrar o novo depósito pendente */
+      /* inicia polling de status e recarrega histórico */
       setTimeout(_loadHistory, 800);
+      if (depositId) _startPolling(depositId);
     }
 
     /* ── gera cobrança PIX ───────────────────────────── */
@@ -850,7 +931,7 @@
                      || '';
 
         if (inp) inp.value = '';
-        _showCheckout(val, data?.transactionId ?? '—', qrCode, qrImg);
+        _showCheckout(val, data?.transactionId ?? '—', qrCode, qrImg, data?.depositId ?? null);
 
       } catch (err) {
         console.error('[dep] fetch error:', err);
