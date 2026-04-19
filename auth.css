@@ -262,6 +262,17 @@
 .auth-switch a:hover { color: var(--text); }
 
 @media (max-width: 480px) {
-  .auth-card { padding: 28px 20px; }
-  .auth-title { font-size: 1.35rem; }
+  .auth-body { padding: 16px; align-items: flex-start; padding-top: 40px; }
+  .auth-card { padding: 24px 18px; }
+  .auth-title { font-size: 1.3rem; }
+  .auth-logo { font-size: 1.05rem; }
+  .auth-perks { gap: 6px; }
+  .auth-perk { font-size: 0.72rem; padding: 3px 8px; }
+}
+
+@media (max-width: 360px) {
+  .auth-body { padding: 12px; padding-top: 32px; }
+  .auth-card { padding: 20px 14px; }
+  .auth-title { font-size: 1.2rem; }
+  .auth-btn { padding: 12px; font-size: 0.9rem; }
 }
