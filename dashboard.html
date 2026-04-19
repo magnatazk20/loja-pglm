@@ -504,7 +504,13 @@
         document.getElementById('buyModalName').textContent     = p.name || 'Produto';
         document.getElementById('buyModalPlatform').textContent = p.platform || '—';
         document.getElementById('buyModalPrice').textContent    = _brl(p.price);
-        const bal = typeof shopBalance !== 'undefined' ? shopBalance : 0;
+        const _balElO = document.getElementById('statShopBalance') || document.getElementById('balanceValue');
+        const _balDom = _balElO
+          ? parseFloat((_balElO.textContent||'0').replace(/[^\d,.-]/g,'').replace(',','.')) || 0
+          : 0;
+        const bal = (typeof shopBalance !== 'undefined' && Number(shopBalance) > 0)
+          ? Number(shopBalance)
+          : _balDom;
         document.getElementById('buyModalBalance').textContent  = _brl(bal);
         const descEl = document.getElementById('buyModalDesc');
         if (descEl) { descEl.textContent = p.description||''; descEl.style.display = p.description?'block':'none'; }
@@ -568,15 +574,22 @@
           return;
         }
 
-        /* verifica saldo */
-        const curBal = typeof shopBalance !== 'undefined' ? shopBalance : 0;
-        const price  = parseFloat(p.price || 0);
+        /* verifica saldo — lê da variável global OU do elemento na tela */
+        const _balEl = document.getElementById('statShopBalance') || document.getElementById('balanceValue');
+        const _balFromDom = _balEl
+          ? parseFloat((_balEl.textContent||'0').replace(/[^\d,.-]/g,'').replace(',','.')) || 0
+          : 0;
+        const curBal = (typeof shopBalance !== 'undefined' && Number(shopBalance) > 0)
+          ? Number(shopBalance)
+          : _balFromDom;
+        const price  = parseFloat(String(p.price || 0).replace(',', '.'));
+
         if (curBal < price) {
           if (warnEl) warnEl.style.display = 'block';
           confirmBtn.disabled = true;
           confirmBtn.style.opacity = '0.5';
           if (fbEl) {
-            fbEl.textContent   = `Saldo insuficiente. Você tem ${parseFloat(curBal).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} e o produto custa ${price.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}.`;
+            fbEl.textContent   = `Saldo insuficiente. Você tem ${curBal.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} e o produto custa ${price.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}.`;
             fbEl.className     = 'auth-feedback auth-error';
             fbEl.style.display = 'block';
           }
@@ -590,10 +603,16 @@
         if (fbEl) { fbEl.style.display='none'; fbEl.textContent=''; }
 
         try {
+          /* backend espera: { userId, amount, productName, referenceId? } */
           const res  = await fetch(_API + '/api/shop/purchase', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_tok}` },
-            body:    JSON.stringify({ productId: Number(pid), userId: Number(_uid) }),
+            body:    JSON.stringify({
+              userId:      Number(_uid),
+              amount:      price,
+              productName: p.name || 'Produto',
+              referenceId: String(p.id),
+            }),
           });
           const data = await res.json().catch(() => ({}));
 
