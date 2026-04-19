@@ -160,8 +160,6 @@
   backdrop-filter: blur(4px);
 }
 .dash-overlay.active { display: block; }
-/* JS usa .open, CSS suportava .mobile-open — unificado para .open */
-.dash-sidebar.open { transform: translateX(0) !important; }
 
 /* ── Main ───────────────────────────────────────────────── */
 .dash-main {
@@ -696,6 +694,9 @@
 @media (max-width: 900px) {
   .dash-sidebar {
     transform: translateX(-100%);
+  }
+  .dash-sidebar.open {
+    transform: translateX(0);
   }
   .dash-topbar { display: flex; }
   .dash-main {
