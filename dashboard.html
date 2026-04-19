@@ -354,6 +354,34 @@
 
   <script src="env.js"></script>
   <script src="dashboard.js"></script>
+
+  <!-- ── CSS inline da loja (garante estilos mesmo com dashboard.css antigo) -->
+  <style>
+  .dash-shop-filter-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+  .dash-shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+  .dash-shop-card{background:var(--card,#1a1a2e);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:transform .18s,box-shadow .18s}
+  .dash-shop-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(99,102,241,.15)}
+  .dash-shop-card-top{display:flex;align-items:center;gap:14px}
+  .dash-shop-card-icon{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(168,85,247,.18));display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#a78bfa;flex-shrink:0;overflow:hidden}
+  .dash-shop-card-icon img{width:100%;height:100%;object-fit:cover}
+  .dash-shop-card-meta{flex:1;min-width:0}
+  .dash-shop-card-name{font-size:.95rem;font-weight:700;color:var(--text,#e2e8f0);margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dash-shop-card-platform{font-size:.72rem;color:var(--text3,#64748b);background:rgba(99,102,241,.1);border-radius:5px;padding:2px 7px;display:inline-block}
+  .dash-shop-card-desc{font-size:.82rem;color:var(--text2,#94a3b8);line-height:1.5;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .dash-shop-card-cat{font-size:.72rem;font-weight:600;color:#818cf8;background:rgba(99,102,241,.12);border-radius:20px;padding:3px 10px;align-self:flex-start}
+  .dash-shop-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)}
+  .dash-shop-card-price{font-size:1.1rem;font-weight:800;color:var(--accent3,#a78bfa)}
+  .dash-shop-buy-btn{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#a855f7);border:none;border-radius:8px;padding:7px 14px;cursor:pointer;transition:opacity .18s,transform .15s;white-space:nowrap}
+  .dash-shop-buy-btn:hover{opacity:.88;transform:scale(1.03)}
+  .dash-shop-buy-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .dash-buy-product-row{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+  .dash-buy-icon{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(168,85,247,.18));display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#a78bfa;flex-shrink:0;overflow:hidden}
+  .dash-buy-desc{font-size:.85rem;color:var(--text2,#94a3b8);margin:8px 0 0;line-height:1.5}
+  .dash-buy-warn{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:8px;padding:10px 14px;font-size:.83rem;margin-top:14px}
+  @media(max-width:600px){.dash-shop-grid{grid-template-columns:1fr}.dash-shop-filter-row{flex-direction:column;gap:8px}}
+  @keyframes dashSpin{to{transform:rotate(360deg)}}
+  </style>
+
   <script>
   /* ── LOJA DE GIFT CARDS — patch inline ─────────────────────────────────
      Garante que loadShopProducts funcione mesmo se dashboard.js for antigo
