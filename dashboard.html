@@ -354,5 +354,161 @@
 
   <script src="env.js"></script>
   <script src="dashboard.js"></script>
+  <script>
+  /* ── LOJA DE GIFT CARDS — patch inline ─────────────────────────────────
+     Garante que loadShopProducts funcione mesmo se dashboard.js for antigo
+  ─────────────────────────────────────────────────────────────────────── */
+  (function () {
+    const _API = (window.ENV && window.ENV.API_BASE) || 'https://api.pgl-m.com';
+    const CAT  = { games:'Games', streaming:'Streaming', musica:'Música', compras:'Compras', social:'Social', outros:'Outros' };
+
+    let _products = [];
+    let _loaded   = false;
+
+    function _esc(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function _brl(v) {
+      return parseFloat(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    }
+
+    function _renderProducts() {
+      const grid   = document.getElementById('shopProductsGrid');
+      const search = (document.getElementById('shopSearch')?.value||'').toLowerCase().trim();
+      const cat    = document.getElementById('shopCatFilter')?.value||'all';
+      if (!grid) return;
+
+      let list = _products;
+      if (cat !== 'all') list = list.filter(p => p.category === cat);
+      if (search) list = list.filter(p =>
+        (p.name||'').toLowerCase().includes(search) ||
+        (p.platform||'').toLowerCase().includes(search) ||
+        (p.description||'').toLowerCase().includes(search)
+      );
+
+      if (list.length === 0) {
+        grid.innerHTML = `<div class="dash-empty dash-empty-full" style="grid-column:1/-1">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="1.5"/></svg>
+          <p>${search||cat!=='all'?'Nenhum produto encontrado.':'Nenhum produto disponível.'}</p>
+          <span>${search||cat!=='all'?'Tente outros filtros.':'Volte em breve!'}</span>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(p => {
+        const price   = _brl(p.price);
+        const catLbl  = CAT[p.category] || (p.category||'Outros');
+        const icon    = p.imageUrl
+          ? `<img src="${_esc(p.imageUrl)}" alt="${_esc(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.style.display='none'" />`
+          : _esc((p.name||'?').charAt(0).toUpperCase());
+        const desc = p.description ? `<p class="dash-shop-card-desc">${_esc(p.description)}</p>` : '';
+        const plat = p.platform ? `<span class="dash-shop-card-platform">${_esc(p.platform)}</span>` : '';
+        return `<div class="dash-shop-card">
+          <div class="dash-shop-card-top">
+            <div class="dash-shop-card-icon">${icon}</div>
+            <div class="dash-shop-card-meta">
+              <h3 class="dash-shop-card-name">${_esc(p.name||'Produto')}</h3>${plat}
+            </div>
+          </div>
+          ${desc}
+          <span class="dash-shop-card-cat">${_esc(catLbl)}</span>
+          <div class="dash-shop-card-footer">
+            <span class="dash-shop-card-price">${price}</span>
+            <button class="dash-shop-buy-btn" data-pid="${_esc(String(p.id))}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"/></svg>
+              Comprar
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+
+      grid.querySelectorAll('.dash-shop-buy-btn[data-pid]').forEach(btn => {
+        btn.addEventListener('click', () => _openBuy(btn.dataset.pid));
+      });
+    }
+
+    async function _loadProducts() {
+      const grid = document.getElementById('shopProductsGrid');
+      if (_loaded) { _renderProducts(); return; }
+
+      if (grid) grid.innerHTML = `<div class="dash-empty dash-empty-full" style="grid-column:1/-1">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="animation:dashSpin 0.8s linear infinite;opacity:0.5">
+          <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" opacity="0.2"/>
+        </svg><p>Carregando produtos...</p></div>`;
+
+      try {
+        const res  = await fetch(_API + '/api/shop/products');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        _products  = Array.isArray(data) ? data : (Array.isArray(data.products) ? data.products : []);
+        _loaded    = true;
+
+        const sel = document.getElementById('shopCatFilter');
+        if (sel) {
+          while (sel.options.length > 1) sel.remove(1);
+          [...new Set(_products.map(p => p.category).filter(Boolean))].forEach(cat => {
+            const o = document.createElement('option');
+            o.value = cat; o.textContent = CAT[cat]||(cat.charAt(0).toUpperCase()+cat.slice(1));
+            sel.appendChild(o);
+          });
+        }
+        _renderProducts();
+      } catch (e) {
+        console.error('Loja:', e);
+        if (grid) grid.innerHTML = `<div class="dash-empty dash-empty-full" style="grid-column:1/-1">
+          <p>Não foi possível carregar os produtos.</p>
+          <button onclick="window._lojaLoad()" style="margin-top:12px;padding:8px 20px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600">Tentar novamente</button>
+        </div>`;
+      }
+    }
+
+    function _openBuy(pid) {
+      const p = _products.find(x => String(x.id) === String(pid));
+      if (!p) return;
+      /* usa modal existente se disponível, senão usa o do buyModal */
+      const modal = document.getElementById('buyModal');
+      if (modal) {
+        document.getElementById('buyModalTitle').textContent    = 'Comprar Gift Card';
+        document.getElementById('buyModalName').textContent     = p.name || 'Produto';
+        document.getElementById('buyModalPlatform').textContent = p.platform || '—';
+        document.getElementById('buyModalPrice').textContent    = _brl(p.price);
+        const bal = typeof shopBalance !== 'undefined' ? shopBalance : 0;
+        document.getElementById('buyModalBalance').textContent  = _brl(bal);
+        const descEl = document.getElementById('buyModalDesc');
+        if (descEl) { descEl.textContent = p.description||''; descEl.style.display = p.description?'block':'none'; }
+        const iconEl = document.getElementById('buyModalIcon');
+        if (iconEl) { iconEl.textContent = (p.name||'?').charAt(0).toUpperCase(); }
+        const warnEl = document.getElementById('buyModalWarn');
+        const confirmBtn = document.getElementById('buyModalConfirmBtn');
+        if (warnEl && confirmBtn) {
+          if (bal < parseFloat(p.price||0)) {
+            warnEl.style.display = 'block'; confirmBtn.disabled = true; confirmBtn.style.opacity = '0.5';
+          } else {
+            warnEl.style.display = 'none'; confirmBtn.disabled = false; confirmBtn.style.opacity = '';
+          }
+        }
+        const fb = document.getElementById('buyModalFeedback');
+        if (fb) { fb.style.display='none'; fb.textContent=''; }
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        /* guarda pid para o botão confirmar do modal existente */
+        if (typeof buyingProductId !== 'undefined') window._buyPid = pid;
+        modal._pid = pid;
+      }
+    }
+
+    /* expõe funções globalmente para sobrescrever as do dashboard.js antigo */
+    window.loadShopProducts   = _loadProducts;
+    window.renderShopProducts = _renderProducts;
+    window._lojaLoad = () => { _loaded = false; _loadProducts(); };
+
+    /* reativa listeners dos filtros caso o dashboard.js antigo não tenha */
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('shopSearch')?.addEventListener('input',  _renderProducts);
+      document.getElementById('shopCatFilter')?.addEventListener('change', _renderProducts);
+    });
+  })();
+  </script>
 </body>
 </html>
