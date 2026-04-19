@@ -612,7 +612,8 @@
   (function () {
     'use strict';
 
-    const _API = (window.ENV && window.ENV.API_BASE) || 'https://api.pgl-m.com';
+    const _API      = (window.ENV && window.ENV.API_BASE)      || 'https://api.pgl-m.com';
+    const _SHOP_API = (window.ENV && window.ENV.SHOP_API_BASE) || 'https://api-loja.pgl-m.com';
 
     /* ── config (padrão; será sobrescrito pela API) ─── */
     let _depEnabled = true;
@@ -791,10 +792,13 @@
       }
 
       try {
-        const res  = await fetch(_API + '/api/CASHIN/', {
+        const res  = await fetch(_SHOP_API + '/api/shop/deposit', {
           method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ userId: user.id, amount: val, method: 'pix' }),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          body:    JSON.stringify({ amount: val }),
         });
         const data = await res.json().catch(() => ({}));
 
