@@ -115,6 +115,7 @@ function switchTab(tabId) {
   /* carrega dados específicos da aba ao entrar nela */
   if (tabId === 'saldo')     loadBalance();
   if (tabId === 'giftcards') renderGiftCardsGrid();
+  if (tabId === 'loja')      loadShopProducts();
 }
 
 document.querySelectorAll('.dash-nav-item[data-tab]').forEach(btn => {
@@ -538,6 +539,113 @@ function escHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+/* ══════════════════════════════════════════════════════════
+   LOJA DE GIFT CARDS
+══════════════════════════════════════════════════════════ */
+const CAT_LABELS = {
+  games: 'Games', streaming: 'Streaming', musica: 'Música',
+  compras: 'Compras', social: 'Social', outros: 'Outros',
+};
+
+let allShopProducts = [];
+let shopLoaded = false;
+
+async function loadShopProducts() {
+  if (shopLoaded) { renderShopProducts(); return; }
+
+  const grid = document.getElementById('shopProductsGrid');
+  if (!grid) return;
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/shop/products`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    allShopProducts = Array.isArray(data.products) ? data.products : [];
+    shopLoaded = true;
+
+    /* popula filtro de categorias */
+    const catSel = document.getElementById('shopCatFilter');
+    if (catSel) {
+      const cats = [...new Set(allShopProducts.map(p => p.category).filter(Boolean))];
+      cats.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = CAT_LABELS[cat] ?? (cat.charAt(0).toUpperCase() + cat.slice(1));
+        catSel.appendChild(opt);
+      });
+    }
+
+    renderShopProducts();
+  } catch (err) {
+    console.error('Erro ao carregar loja:', err);
+    grid.innerHTML = '<div class="dash-empty dash-empty-full"><p>Não foi possível carregar os produtos.</p><span>Tente novamente mais tarde.</span></div>';
+  }
+}
+
+function renderShopProducts() {
+  const grid   = document.getElementById('shopProductsGrid');
+  const search = (document.getElementById('shopSearch')?.value || '').toLowerCase().trim();
+  const cat    = document.getElementById('shopCatFilter')?.value || 'all';
+  if (!grid) return;
+
+  let list = allShopProducts;
+  if (cat !== 'all') list = list.filter(p => p.category === cat);
+  if (search) list = list.filter(p =>
+    (p.name || '').toLowerCase().includes(search) ||
+    (p.platform || '').toLowerCase().includes(search) ||
+    (p.description || '').toLowerCase().includes(search)
+  );
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="dash-empty dash-empty-full">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <p>${search || cat !== 'all' ? 'Nenhum produto encontrado.' : 'Nenhum produto disponível.'}</p>
+      <span>${search || cat !== 'all' ? 'Tente outros filtros.' : 'Volte em breve!'}</span>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(p => buildShopCard(p)).join('');
+}
+
+function buildShopCard(p) {
+  const price   = fmtBRL(p.price ?? 0);
+  const catLbl  = CAT_LABELS[p.category] ?? (p.category || 'Outros');
+  const iconHtml = p.imageUrl
+    ? `<img src="${escHtml(p.imageUrl)}" alt="${escHtml(p.name)}" onerror="this.style.display='none'" />`
+    : escHtml((p.name || '?').charAt(0).toUpperCase());
+  const descHtml = p.description
+    ? `<p class="dash-shop-card-desc">${escHtml(p.description)}</p>`
+    : '';
+  const platHtml = p.platform
+    ? `<span class="dash-shop-card-platform">${escHtml(p.platform)}</span>`
+    : '';
+
+  return `
+    <div class="dash-shop-card">
+      <div class="dash-shop-card-top">
+        <div class="dash-shop-card-icon">${iconHtml}</div>
+        <div class="dash-shop-card-meta">
+          <h3 class="dash-shop-card-name">${escHtml(p.name || 'Produto')}</h3>
+          ${platHtml}
+        </div>
+      </div>
+      ${descHtml}
+      <span class="dash-shop-card-cat">${escHtml(catLbl)}</span>
+      <div class="dash-shop-card-footer">
+        <span class="dash-shop-card-price">${price}</span>
+        <button class="dash-shop-buy-btn" onclick="window.location.href='index.html#produtos'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"/></svg>
+          Comprar
+        </button>
+      </div>
+    </div>`;
+}
+
+/* filtros da loja */
+document.getElementById('shopSearch')?.addEventListener('input',  renderShopProducts);
+document.getElementById('shopCatFilter')?.addEventListener('change', renderShopProducts);
 
 /* ══════════════════════════════════════════════════════════
    INICIALIZAÇÃO

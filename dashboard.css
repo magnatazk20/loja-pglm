@@ -681,6 +681,131 @@
   line-height: 1.5;
 }
 
+/* ── Loja de Gift Cards ─────────────────────────────────── */
+@keyframes dashSpin { to { transform: rotate(360deg); } }
+
+.dash-shop-filter-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.dash-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.dash-shop-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.dash-shop-card:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.dash-shop-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-shop-card-icon {
+  width: 52px; height: 52px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.18));
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--accent3);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.dash-shop-card-icon img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.dash-shop-card-meta { flex: 1; min-width: 0; }
+.dash-shop-card-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin: 0 0 3px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-shop-card-platform {
+  font-size: 0.75rem;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+.dash-shop-card-desc {
+  font-size: 0.8rem;
+  color: var(--text2);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dash-shop-card-cat {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(99,102,241,0.1);
+  color: var(--accent3);
+  border: 1px solid rgba(99,102,241,0.2);
+  align-self: flex-start;
+}
+
+.dash-shop-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+.dash-shop-card-price {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--text);
+}
+.dash-shop-buy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.15s;
+  white-space: nowrap;
+}
+.dash-shop-buy-btn:hover { opacity: 0.88; transform: scale(1.03); }
+
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════ */
@@ -749,6 +874,10 @@
   .dash-filter-row { flex-direction: column; gap: 8px; }
   .dash-search { min-width: 0; width: 100%; }
   .dash-select { width: 100%; }
+
+  /* Loja */
+  .dash-shop-grid { grid-template-columns: 1fr; }
+  .dash-shop-filter-row { flex-direction: column; gap: 8px; }
 
   /* Modal → bottom sheet */
   .dash-modal-overlay { align-items: flex-end; padding: 0; }
