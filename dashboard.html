@@ -383,6 +383,13 @@
   .auth-feedback{border-radius:8px;padding:10px 14px;font-size:.84rem;font-weight:600;margin-top:8px}
   .auth-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171}
   .auth-success{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#34d399}
+  /* ── Stock badges ── */
+  .dash-shop-stock{font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap;letter-spacing:.02em}
+  .dash-shop-stock-out{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+  .dash-shop-stock-low{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+  .dash-shop-stock-ok{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+  .dash-shop-card-out{opacity:.7;filter:grayscale(.35)}
+  .dash-shop-card-out .dash-shop-card-price{color:var(--text3,#64748b)}
   </style>
 
   <script>
@@ -427,14 +434,21 @@
       }
 
       grid.innerHTML = list.map(p => {
-        const price   = _brl(p.price);
-        const catLbl  = CAT[p.category] || (p.category||'Outros');
-        const icon    = p.imageUrl
+        const price    = _brl(p.price);
+        const catLbl   = CAT[p.category] || (p.category||'Outros');
+        const stock    = parseInt(p.stockCount ?? p.stock_count ?? 0, 10);
+        const noStock  = stock === 0;
+        const icon     = p.imageUrl
           ? `<img src="${_esc(p.imageUrl)}" alt="${_esc(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.style.display='none'" />`
           : _esc((p.name||'?').charAt(0).toUpperCase());
-        const desc = p.description ? `<p class="dash-shop-card-desc">${_esc(p.description)}</p>` : '';
-        const plat = p.platform ? `<span class="dash-shop-card-platform">${_esc(p.platform)}</span>` : '';
-        return `<div class="dash-shop-card">
+        const desc  = p.description ? `<p class="dash-shop-card-desc">${_esc(p.description)}</p>` : '';
+        const plat  = p.platform ? `<span class="dash-shop-card-platform">${_esc(p.platform)}</span>` : '';
+        const stockBadge = noStock
+          ? `<span class="dash-shop-stock dash-shop-stock-out">Sem estoque</span>`
+          : stock <= 5
+            ? `<span class="dash-shop-stock dash-shop-stock-low">⚡ ${stock} disponíve${stock===1?'l':'is'}</span>`
+            : `<span class="dash-shop-stock dash-shop-stock-ok">✓ ${stock} disponíve${stock===1?'l':'is'}</span>`;
+        return `<div class="dash-shop-card${noStock?' dash-shop-card-out':''}">
           <div class="dash-shop-card-top">
             <div class="dash-shop-card-icon">${icon}</div>
             <div class="dash-shop-card-meta">
@@ -442,12 +456,15 @@
             </div>
           </div>
           ${desc}
-          <span class="dash-shop-card-cat">${_esc(catLbl)}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="dash-shop-card-cat">${_esc(catLbl)}</span>
+            ${stockBadge}
+          </div>
           <div class="dash-shop-card-footer">
             <span class="dash-shop-card-price">${price}</span>
-            <button class="dash-shop-buy-btn" data-pid="${_esc(String(p.id))}">
+            <button class="dash-shop-buy-btn" data-pid="${_esc(String(p.id))}" ${noStock?'disabled title="Produto sem estoque disponível"':''}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"/></svg>
-              Comprar
+              ${noStock ? 'Indisponível' : 'Comprar'}
             </button>
           </div>
         </div>`;
