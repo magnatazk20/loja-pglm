@@ -42,57 +42,200 @@ navMobile.querySelectorAll('a').forEach(link => {
   })
 })
 
-/* ── Filter tabs ──────────────────────────────────────────────────────────── */
-const filterBtns = document.querySelectorAll('.filter-btn')
-const productCards = document.querySelectorAll('.product-card')
-
-filterBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    /* Active state */
-    filterBtns.forEach(b => b.classList.remove('active'))
-    btn.classList.add('active')
-
-    const filter = btn.dataset.filter
-
-    productCards.forEach(card => {
-      if (filter === 'all' || card.dataset.category === filter) {
-        card.style.display = ''
-        /* Pequena animação de entrada */
-        card.style.opacity = '0'
-        card.style.transform = 'translateY(12px)'
-        setTimeout(() => {
-          card.style.transition = 'opacity 0.35s ease, transform 0.35s ease'
-          card.style.opacity = '1'
-          card.style.transform = 'translateY(0)'
-        }, 10)
-      } else {
-        card.style.display = 'none'
-      }
-    })
-  })
-})
-
 /* ── Scroll reveal (Intersection Observer) ────────────────────────────────── */
-const fadeEls = document.querySelectorAll(
-  '.cat-card, .product-card, .step-card, .review-card, .trust-item, .section-header'
-)
-
-fadeEls.forEach(el => el.classList.add('fade-in'))
-
-const observer = new IntersectionObserver((entries) => {
+const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       entry.target.classList.add('visible')
-      observer.unobserve(entry.target)
+      revealObserver.unobserve(entry.target)
     }
   })
 }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' })
 
-fadeEls.forEach((el, i) => {
-  /* Staggered delay por grupo */
-  el.style.transitionDelay = `${(i % 6) * 0.07}s`
-  observer.observe(el)
-})
+function initScrollReveal() {
+  const fadeEls = document.querySelectorAll(
+    '.cat-card, .product-card, .step-card, .review-card, .trust-item, .section-header'
+  )
+  fadeEls.forEach((el, i) => {
+    el.classList.add('fade-in')
+    el.style.transitionDelay = `${(i % 6) * 0.07}s`
+    revealObserver.observe(el)
+  })
+}
+
+/* ── Category label map ───────────────────────────────────────────────────── */
+const CAT_LABELS = {
+  games:     'Games',
+  streaming: 'Streaming',
+  musica:    'Música',
+  compras:   'Compras',
+  social:    'Social',
+  outros:    'Outros',
+}
+
+/* ── Format BRL ───────────────────────────────────────────────────────────── */
+function formatBRL(value) {
+  return Number(value ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+/* ── Build product card HTML ──────────────────────────────────────────────── */
+function buildProductCard(product) {
+  const price = formatBRL(product.price)
+
+  const iconHtml = product.imageUrl
+    ? `<img src="${product.imageUrl}" alt="${product.name}" class="product-img-thumb" onerror="this.parentElement.innerHTML='<span class=\\'product-icon-letter\\'>${(product.name || '?').charAt(0).toUpperCase()}</span>'" />`
+    : `<span class="product-icon-letter">${(product.name || '?').charAt(0).toUpperCase()}</span>`
+
+  const descHtml = product.description
+    ? `<p class="product-desc">${product.description}</p>`
+    : ''
+
+  const platformHtml = product.platform
+    ? `<span class="product-platform">${product.platform}</span>`
+    : ''
+
+  return `
+    <div class="product-card" data-category="${product.category ?? 'outros'}">
+      <div class="product-icon-wrap">
+        ${iconHtml}
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">${product.name}${platformHtml}</h3>
+        ${descHtml}
+      </div>
+      <div class="product-footer">
+        <div class="product-price">
+          <span class="price-from">Preço</span>
+          <span class="price-value">${price}</span>
+        </div>
+        <a href="#comprar" class="btn btn-primary btn-sm">Comprar</a>
+      </div>
+    </div>
+  `
+}
+
+/* ── Filter tabs logic ────────────────────────────────────────────────────── */
+function buildFilterTabs(categories) {
+  const filterTabs = document.getElementById('filterTabs')
+  filterTabs.innerHTML = ''
+
+  const allBtn = document.createElement('button')
+  allBtn.className = 'filter-btn active'
+  allBtn.dataset.filter = 'all'
+  allBtn.textContent = 'Todos'
+  filterTabs.appendChild(allBtn)
+
+  categories.forEach(cat => {
+    const btn = document.createElement('button')
+    btn.className = 'filter-btn'
+    btn.dataset.filter = cat
+    btn.textContent = CAT_LABELS[cat] ?? (cat.charAt(0).toUpperCase() + cat.slice(1))
+    filterTabs.appendChild(btn)
+  })
+}
+
+function applyFilter(filter) {
+  const cards = document.querySelectorAll('#productsGrid .product-card')
+  const filterBtns = document.querySelectorAll('.filter-btn')
+
+  filterBtns.forEach(b => b.classList.remove('active'))
+  const activeBtn = document.querySelector(`.filter-btn[data-filter="${filter}"]`)
+  if (activeBtn) activeBtn.classList.add('active')
+
+  cards.forEach(card => {
+    if (filter === 'all' || card.dataset.category === filter) {
+      card.style.display = ''
+      card.style.opacity = '0'
+      card.style.transform = 'translateY(12px)'
+      setTimeout(() => {
+        card.style.transition = 'opacity 0.35s ease, transform 0.35s ease'
+        card.style.opacity = '1'
+        card.style.transform = 'translateY(0)'
+      }, 10)
+    } else {
+      card.style.display = 'none'
+    }
+  })
+}
+
+function bindFilterBtns() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyFilter(btn.dataset.filter)
+    })
+  })
+}
+
+/* ── Value chip interactive select ───────────────────────────────────────── */
+function bindValueChips(container) {
+  container.querySelectorAll('.product-values').forEach(valuesEl => {
+    valuesEl.querySelectorAll('.value-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        valuesEl.querySelectorAll('.value-chip').forEach(c => c.classList.remove('active'))
+        chip.classList.add('active')
+      })
+    })
+  })
+}
+
+/* ── Render products into grid ────────────────────────────────────────────── */
+function renderProducts(products) {
+  const grid = document.getElementById('productsGrid')
+
+  if (!products || products.length === 0) {
+    grid.innerHTML = '<p class="products-empty">Nenhum produto disponível no momento.</p>'
+    return
+  }
+
+  /* Collect distinct categories in the order they appear */
+  const cats = []
+  products.forEach(p => {
+    const cat = p.category ?? 'outros'
+    if (!cats.includes(cat)) cats.push(cat)
+  })
+
+  /* Build filter tabs */
+  buildFilterTabs(cats)
+  bindFilterBtns()
+
+  /* Render cards */
+  grid.innerHTML = products.map(buildProductCard).join('')
+
+  /* Bind value chips on any static chips (not used currently but kept for future) */
+  bindValueChips(grid)
+
+  /* Re-init scroll reveal for newly added cards */
+  grid.querySelectorAll('.product-card').forEach((el, i) => {
+    el.classList.add('fade-in')
+    el.style.transitionDelay = `${(i % 6) * 0.07}s`
+    revealObserver.observe(el)
+  })
+}
+
+/* ── Fetch products from API ──────────────────────────────────────────────── */
+async function loadProducts() {
+  const grid = document.getElementById('productsGrid')
+  const loading = document.getElementById('productsLoading')
+
+  try {
+    const apiBase = (window.ENV && window.ENV.API_BASE) ? window.ENV.API_BASE : 'https://api.pgl-m.com'
+    const res = await fetch(`${apiBase}/api/shop/products`)
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+    const data = await res.json()
+
+    if (data && Array.isArray(data.products)) {
+      renderProducts(data.products)
+    } else {
+      throw new Error('Resposta inválida da API')
+    }
+  } catch (err) {
+    console.warn('[PGLM] Não foi possível carregar produtos da API:', err.message)
+    if (loading) loading.remove()
+    grid.innerHTML = '<p class="products-empty">Produtos indisponíveis no momento. Tente novamente mais tarde.</p>'
+  }
+}
 
 /* ── Active nav link on scroll ────────────────────────────────────────────── */
 const sections = document.querySelectorAll('section[id]')
@@ -111,16 +254,6 @@ const sectionObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.35 })
 
 sections.forEach(section => sectionObserver.observe(section))
-
-/* ── Value chip interactive select ───────────────────────────────────────── */
-document.querySelectorAll('.product-values').forEach(valuesEl => {
-  valuesEl.querySelectorAll('.value-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      valuesEl.querySelectorAll('.value-chip').forEach(c => c.classList.remove('active'))
-      chip.classList.add('active')
-    })
-  })
-})
 
 /* ── Smooth scroll for anchor links ──────────────────────────────────────── */
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -172,3 +305,15 @@ const statsObserver = new IntersectionObserver((entries) => {
 
 const heroStats = document.querySelector('.hero-stats')
 if (heroStats) statsObserver.observe(heroStats)
+
+/* ── Add spin keyframe for loading spinner ────────────────────────────────── */
+const spinStyle = document.createElement('style')
+spinStyle.textContent = '@keyframes spin { to { transform: rotate(360deg); } }'
+document.head.appendChild(spinStyle)
+
+/* ── Init ─────────────────────────────────────────────────────────────────── */
+/* Scroll reveal for static elements (non-product cards) */
+initScrollReveal()
+
+/* Load products from API */
+loadProducts()

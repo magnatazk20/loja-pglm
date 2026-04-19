@@ -616,6 +616,65 @@ img { display: block; max-width: 100%; }
 .pi-amazon   { background: #ff9900; color: #131921; }
 .pi-nintendo { background: #e4000f; color: #fff; }
 
+/* ── Dynamic product icon (API-loaded) ──────────────────────────────────── */
+.product-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.product-img-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+.product-icon-letter {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--accent3);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(139,92,246,0.18));
+}
+
+.product-platform {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text3);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* ── Loading / empty states ─────────────────────────────────────────────── */
+.products-loading,
+.products-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 56px 24px;
+  font-size: 0.95rem;
+  color: var(--text3);
+  font-weight: 500;
+}
+
 .product-info { flex: 1; }
 .product-name { font-size: 1rem; font-weight: 800; margin-bottom: 6px; }
 .product-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.5; margin-bottom: 12px; }
