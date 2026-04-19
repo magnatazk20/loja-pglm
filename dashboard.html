@@ -510,17 +510,36 @@
       if (tabId === 'loja') _loadProducts();
     };
 
-    /* fallback: listener direto no botão da sidebar caso switchTab não funcione */
-    document.addEventListener('DOMContentLoaded', () => {
+    /* MutationObserver: dispara _loadProducts quando tab-loja ganhar classe 'active' */
+    const _tabLoja = document.getElementById('tab-loja');
+    if (_tabLoja) {
+      new MutationObserver(function(muts) {
+        muts.forEach(function(m) {
+          if (m.type === 'attributes' && m.attributeName === 'class') {
+            if (_tabLoja.classList.contains('active')) _loadProducts();
+          }
+        });
+      }).observe(_tabLoja, { attributes: true });
+    }
+
+    /* listener direto no botão da sidebar — triple-safe fallback */
+    function _attachLojaBtn() {
       const lojaBtn = document.querySelector('.dash-nav-item[data-tab="loja"]');
-      if (lojaBtn) {
-        lojaBtn.addEventListener('click', () => {
-          setTimeout(_loadProducts, 50); /* aguarda tab ficar ativa */
+      if (lojaBtn && !lojaBtn._lojaPatch) {
+        lojaBtn._lojaPatch = true;
+        lojaBtn.addEventListener('click', function() {
+          setTimeout(_loadProducts, 80);
         });
       }
       document.getElementById('shopSearch')?.addEventListener('input',  _renderProducts);
       document.getElementById('shopCatFilter')?.addEventListener('change', _renderProducts);
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', _attachLojaBtn);
+    } else {
+      _attachLojaBtn();
+    }
   })();
   </script>
 </body>
