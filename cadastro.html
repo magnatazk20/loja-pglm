@@ -83,9 +83,35 @@
         <div class="auth-terms">
           <label class="auth-check-label">
             <input type="checkbox" id="reg-terms" required />
-            <span>Li e aceito os <a href="#">Termos de Uso</a> e <a href="#">Política de Privacidade</a></span>
+            <span>Li e aceito os <a href="termos.html" target="_blank">Termos de Compra</a></span>
           </label>
         </div>
+
+        <!-- ── CAPTCHA ──────────────────────────────────────────── -->
+        <div class="auth-field" id="captcha-block">
+          <label for="captcha-input" style="justify-content:space-between;display:flex;align-items:center;">
+            <span>Verificação de segurança</span>
+            <button type="button" id="captcha-refresh" title="Novo desafio"
+              style="background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;display:flex;align-items:center;gap:4px;font-size:0.75rem;font-weight:600;transition:color .15s;"
+              onmouseover="this.style.color='var(--text2)'" onmouseout="this.style.color='var(--text3)'">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M23 4v6h-6M1 20v-6h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Novo
+            </button>
+          </label>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div style="position:relative;flex-shrink:0;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);">
+              <canvas id="captcha-canvas" width="160" height="56" style="display:block;"></canvas>
+            </div>
+            <div class="auth-input-wrap" style="flex:1;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <input type="text" id="captcha-input" name="captcha" placeholder="Digite o resultado" autocomplete="off"
+                inputmode="numeric" maxlength="4"
+                style="padding-right:12px;" />
+            </div>
+          </div>
+          <p id="captcha-hint" style="font-size:0.76rem;color:var(--text3);margin-top:2px;">Resolva a conta acima e digite o resultado.</p>
+        </div>
+        <!-- ── /CAPTCHA ─────────────────────────────────────────── -->
 
         <button type="submit" class="auth-btn" id="registerBtn">
           <span class="auth-btn-text">Criar minha conta</span>
@@ -101,6 +127,219 @@
   </div>
 
   <script src="env.js"></script>
+
+  <!-- ── CAPTCHA engine (inline, não depende de cache externo) ── -->
+  <script>
+  (function () {
+    'use strict';
+
+    /* ── salt interno (mistura com a resposta para gerar token) ── */
+    const SALT = 'pglm_cap_2x9z';
+
+    /* ── estado ─────────────────────────────────────────────────── */
+    let _answer = 0;
+    let _token  = '';
+    let _used   = false;      /* evita reutilizar o mesmo token     */
+
+    /* ── geração do token ────────────────────────────────────────
+       token = base64( answer_xor_salt + ":" + timestamp )
+       Sem o SALT e o timestamp, não dá pra forjar.
+    ─────────────────────────────────────────────────────────────── */
+    function makeToken(answer) {
+      const ts  = Date.now();
+      const raw = (answer ^ ts & 0xFFFF) + ':' + ts + ':' + SALT;
+      return btoa(raw);
+    }
+
+    function verifyToken(token, userAnswer) {
+      try {
+        const raw   = atob(token);
+        const parts = raw.split(':');
+        if (parts.length < 3) return false;
+        const ts      = parseInt(parts[1], 10);
+        const saltOk  = parts.slice(2).join(':') === SALT;
+        const ageOk   = (Date.now() - ts) < 10 * 60 * 1000;   /* 10 min */
+        const xorBack = parseInt(parts[0], 10) ^ (ts & 0xFFFF);
+        return saltOk && ageOk && (xorBack === parseInt(userAnswer, 10));
+      } catch { return false; }
+    }
+
+    /* ── geração do desafio ──────────────────────────────────────
+       Operações: soma e subtração (resultado sempre ≥ 0, ≤ 20).
+       Nunca usa multiplicação/divisão pra não assustar.
+    ─────────────────────────────────────────────────────────────── */
+    function newChallenge() {
+      const ops = ['+', '-'];
+      const op  = ops[Math.floor(Math.random() * ops.length)];
+      let a, b;
+      if (op === '+') {
+        a = Math.floor(Math.random() * 10) + 1;   /* 1–10 */
+        b = Math.floor(Math.random() * 10) + 1;
+      } else {
+        a = Math.floor(Math.random() * 10) + 10;  /* 10–19 */
+        b = Math.floor(Math.random() * a);         /* 0..(a-1) */
+      }
+      return { a, b, op, answer: op === '+' ? a + b : a - b };
+    }
+
+    /* ── renderização no canvas ──────────────────────────────────
+       Usa ruído (linhas, pontos, curvas) + texto ligeiramente rotacionado
+       dificultando OCR mas mantendo leitura humana fácil.
+    ─────────────────────────────────────────────────────────────── */
+    function drawCaptcha(canvas, challenge) {
+      const ctx = canvas.getContext('2d');
+      const W   = canvas.width;
+      const H   = canvas.height;
+
+      /* fundo */
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(0, 0, W, H);
+
+      /* linhas de ruído */
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(rnd(0, W), rnd(0, H));
+        ctx.bezierCurveTo(rnd(0,W), rnd(0,H), rnd(0,W), rnd(0,H), rnd(0,W), rnd(0,H));
+        ctx.strokeStyle = 'rgba(' + rndInt(80,160) + ',' + rndInt(80,160) + ',' + rndInt(140,220) + ',0.35)';
+        ctx.lineWidth   = rnd(0.8, 1.6);
+        ctx.stroke();
+      }
+
+      /* pontos de ruído */
+      for (let i = 0; i < 40; i++) {
+        ctx.beginPath();
+        ctx.arc(rnd(0, W), rnd(0, H), rnd(0.8, 2), 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(150,150,200,0.3)';
+        ctx.fill();
+      }
+
+      /* texto do desafio */
+      const text  = challenge.a + ' ' + challenge.op + ' ' + challenge.b + ' = ?';
+      const chars = text.split('');
+      const startX = 12;
+      const baseY  = H / 2 + 8;
+      const step   = (W - 24) / chars.length;
+
+      ctx.save();
+      chars.forEach((ch, i) => {
+        const x     = startX + i * step;
+        const angle = (Math.random() - 0.5) * 0.3;
+        const dy    = (Math.random() - 0.5) * 5;
+        ctx.save();
+        ctx.translate(x + step / 2, baseY + dy);
+        ctx.rotate(angle);
+        ctx.font = 'bold ' + rndInt(20, 24) + 'px Inter, sans-serif';
+        ctx.fillStyle = i % 2 === 0
+          ? 'rgba(167,167,255,0.95)'
+          : 'rgba(200,200,255,0.88)';
+        ctx.textAlign  = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(ch, 0, 0);
+        ctx.restore();
+      });
+      ctx.restore();
+    }
+
+    function rnd(min, max) { return Math.random() * (max - min) + min; }
+    function rndInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    /* ── API pública (usada pelo auth.js via window.CAPTCHA) ─── */
+    window.CAPTCHA = {
+      verify(userInput) {
+        if (_used) return false;
+        const ok = verifyToken(_token, userInput.trim());
+        if (ok) _used = true;
+        return ok;
+      },
+      reset: generate,
+      markUsed() { _used = true; }
+    };
+
+    /* ── inicialização ───────────────────────────────────────── */
+    function generate() {
+      const canvas = document.getElementById('captcha-canvas');
+      if (!canvas) return;
+
+      _used = false;
+      const ch = newChallenge();
+      _answer  = ch.answer;
+      _token   = makeToken(_answer);
+
+      /* limpa input */
+      const inp = document.getElementById('captcha-input');
+      if (inp) { inp.value = ''; inp.classList.remove('error'); }
+
+      /* guarda token em sessionStorage (extra de segurança — não ajuda bot) */
+      try { sessionStorage.setItem('pglm_cap_tk', _token); } catch {}
+
+      drawCaptcha(canvas, ch);
+    }
+
+    /* aguarda DOM pronto */
+    function init() {
+      generate();
+      const refreshBtn = document.getElementById('captcha-refresh');
+      if (refreshBtn) refreshBtn.addEventListener('click', generate);
+
+      /* limpa erro ao digitar */
+      const inp = document.getElementById('captcha-input');
+      if (inp) inp.addEventListener('input', () => inp.classList.remove('error'));
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+
   <script src="auth.js"></script>
+
+  <!-- ── hook CAPTCHA no formulário de cadastro ─────────────── -->
+  <script>
+  (function () {
+    /* aguarda o auth.js registrar o listener e então adiciona o
+       nosso interceptador ANTES do submit chegar ao fetch */
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('registerForm');
+      if (!form) return;
+
+      /* capturamos o submit na fase de captura (capture=true)
+         para rodar ANTES do listener do auth.js */
+      form.addEventListener('submit', function (e) {
+        const inp   = document.getElementById('captcha-input');
+        const hint  = document.getElementById('captcha-hint');
+        if (!inp) return;
+
+        const val = inp.value.trim();
+
+        if (!val) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          inp.classList.add('error');
+          if (hint) { hint.textContent = '⚠ Digite o resultado da conta acima.'; hint.style.color = '#fca5a5'; }
+          inp.focus();
+          return;
+        }
+
+        if (!window.CAPTCHA || !window.CAPTCHA.verify(val)) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          inp.classList.add('error');
+          if (hint) { hint.textContent = '✕ Resposta incorreta. Um novo desafio foi gerado.'; hint.style.color = '#fca5a5'; }
+          /* gera novo desafio */
+          if (window.CAPTCHA) window.CAPTCHA.reset();
+          inp.focus();
+          return;
+        }
+
+        /* CAPTCHA ok — deixa o submit prosseguir para o auth.js */
+        if (hint) { hint.textContent = '✓ Verificação concluída.'; hint.style.color = '#6ee7b7'; }
+      }, true /* capture phase */);
+    });
+  })();
+  </script>
 </body>
 </html>
