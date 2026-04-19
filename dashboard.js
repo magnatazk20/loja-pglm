@@ -552,22 +552,40 @@ let allShopProducts = [];
 let shopLoaded = false;
 
 async function loadShopProducts() {
-  if (shopLoaded) { renderShopProducts(); return; }
+  const grid = document.getElementById('shopProductsGrid');
+
+  /* se já carregou, só renderiza */
+  if (shopLoaded) {
+    renderShopProducts();
+    return;
+  }
+
+  /* mostra spinner */
+  if (grid) {
+    grid.innerHTML = `
+      <div class="dash-empty dash-empty-full" style="grid-column:1/-1">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="animation:dashSpin 0.8s linear infinite;opacity:0.5">
+          <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" opacity="0.2"/>
+        </svg>
+        <p>Carregando produtos...</p>
+      </div>`;
+  }
 
   try {
     const res  = await fetch(`${API_BASE}/api/shop/products`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+
     /* suporta { products: [...] } ou array direto */
     allShopProducts = Array.isArray(data) ? data
       : Array.isArray(data.products) ? data.products
       : [];
     shopLoaded = true;
 
-    /* popula filtro de categorias (limpa opções antigas antes de adicionar) */
+    /* popula filtro de categorias */
     const catSel = document.getElementById('shopCatFilter');
     if (catSel) {
-      /* remove opções antigas (mantém só "Todas as categorias") */
       while (catSel.options.length > 1) catSel.remove(1);
       const cats = [...new Set(allShopProducts.map(p => p.category).filter(Boolean))];
       cats.forEach(cat => {
@@ -581,8 +599,12 @@ async function loadShopProducts() {
     renderShopProducts();
   } catch (err) {
     console.error('Erro ao carregar loja:', err);
-    const grid = document.getElementById('shopProductsGrid');
-    if (grid) grid.innerHTML = '<div class="dash-empty dash-empty-full"><p>Não foi possível carregar os produtos.</p><span>Tente novamente mais tarde.</span></div>';
+    if (grid) grid.innerHTML = `
+      <div class="dash-empty dash-empty-full" style="grid-column:1/-1">
+        <p>Não foi possível carregar os produtos.</p>
+        <span>Verifique sua conexão e tente novamente.</span>
+        <button onclick="shopLoaded=false;loadShopProducts()" style="margin-top:12px;padding:8px 20px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:600">Tentar novamente</button>
+      </div>`;
   }
 }
 
@@ -789,8 +811,6 @@ async function init() {
     loadBalance(),
     loadGiftCards(),
   ]);
-  /* pré-carrega produtos da loja em background */
-  loadShopProducts().catch(() => {});
 }
 
 init().catch(console.error);
