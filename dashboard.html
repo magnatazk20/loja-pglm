@@ -803,7 +803,7 @@
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          _showMsg(data?.error || 'Falha ao processar depósito. Tente novamente.', 'dep-msg-error');
+          _showMsg(data?.error || `Falha ao processar depósito (${res.status}). Tente novamente.`, 'dep-msg-error');
           return;
         }
 
@@ -816,8 +816,9 @@
         if (inp) inp.value = '';
         _showCheckout(val, data?.transactionId ?? '—', qrCode, qrImg);
 
-      } catch {
-        _showMsg('Erro de conexão. Verifique sua internet e tente novamente.', 'dep-msg-error');
+      } catch (err) {
+        console.error('[dep] fetch error:', err);
+        _showMsg('Não foi possível conectar ao servidor de pagamento. Tente novamente em instantes.', 'dep-msg-error');
       } finally {
         if (btn) {
           btn.disabled  = false;
