@@ -805,6 +805,44 @@
   white-space: nowrap;
 }
 .dash-shop-buy-btn:hover { opacity: 0.88; transform: scale(1.03); }
+.dash-shop-buy-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── Modal compra ─────────────────────────────────────── */
+.dash-buy-product-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.dash-buy-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(168,85,247,.18));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--accent3);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.dash-buy-desc {
+  font-size: 0.85rem;
+  color: var(--text2);
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+.dash-buy-warn {
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.3);
+  color: #f87171;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.83rem;
+  margin-top: 14px;
+}
 
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE

@@ -607,6 +607,11 @@ function renderShopProducts() {
   }
 
   grid.innerHTML = list.map(p => buildShopCard(p)).join('');
+
+  /* attach buy buttons */
+  grid.querySelectorAll('.dash-shop-buy-btn[data-product-id]').forEach(btn => {
+    btn.addEventListener('click', () => openBuyModal(btn.dataset.productId));
+  });
 }
 
 function buildShopCard(p) {
@@ -635,7 +640,7 @@ function buildShopCard(p) {
       <span class="dash-shop-card-cat">${escHtml(catLbl)}</span>
       <div class="dash-shop-card-footer">
         <span class="dash-shop-card-price">${price}</span>
-        <button class="dash-shop-buy-btn" onclick="window.location.href='index.html#produtos'">
+        <button class="dash-shop-buy-btn" data-product-id="${escHtml(String(p.id))}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"/></svg>
           Comprar
         </button>
@@ -646,6 +651,131 @@ function buildShopCard(p) {
 /* filtros da loja */
 document.getElementById('shopSearch')?.addEventListener('input',  renderShopProducts);
 document.getElementById('shopCatFilter')?.addEventListener('change', renderShopProducts);
+
+/* ══════════════════════════════════════════════════════════
+   MODAL: COMPRAR PRODUTO
+══════════════════════════════════════════════════════════ */
+let buyingProductId = null;
+
+function openBuyModal(productId) {
+  const p = allShopProducts.find(x => String(x.id) === String(productId));
+  if (!p) return;
+
+  buyingProductId = p.id;
+
+  /* preenche modal */
+  document.getElementById('buyModalTitle').textContent    = 'Comprar Gift Card';
+  document.getElementById('buyModalName').textContent     = p.name || 'Produto';
+  document.getElementById('buyModalPlatform').textContent = p.platform || '—';
+  document.getElementById('buyModalPrice').textContent    = fmtBRL(p.price ?? 0);
+  document.getElementById('buyModalBalance').textContent  = fmtBRL(shopBalance);
+
+  const descEl = document.getElementById('buyModalDesc');
+  descEl.textContent = p.description || '';
+  descEl.style.display = p.description ? 'block' : 'none';
+
+  /* ícone */
+  const iconEl = document.getElementById('buyModalIcon');
+  if (p.imageUrl) {
+    iconEl.innerHTML = `<img src="${escHtml(p.imageUrl)}" alt="${escHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.parentElement.textContent='${escHtml((p.name||'?').charAt(0).toUpperCase())}'" />`;
+  } else {
+    iconEl.textContent = (p.name || '?').charAt(0).toUpperCase();
+  }
+
+  /* aviso saldo insuficiente */
+  const warnEl = document.getElementById('buyModalWarn');
+  const confirmBtn = document.getElementById('buyModalConfirmBtn');
+  if (shopBalance < parseFloat(p.price ?? 0)) {
+    warnEl.style.display = 'block';
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.5';
+  } else {
+    warnEl.style.display = 'none';
+    confirmBtn.disabled = false;
+    confirmBtn.style.opacity = '';
+  }
+
+  /* limpa feedback anterior */
+  const fbEl = document.getElementById('buyModalFeedback');
+  fbEl.style.display = 'none';
+  fbEl.textContent = '';
+  fbEl.className = 'auth-feedback';
+
+  /* abre modal */
+  const modal = document.getElementById('buyModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeBuyModal() {
+  const modal = document.getElementById('buyModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  buyingProductId = null;
+}
+
+document.getElementById('closeBuyModal')?.addEventListener('click', closeBuyModal);
+document.getElementById('buyModal')?.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeBuyModal();
+});
+
+document.getElementById('buyModalConfirmBtn')?.addEventListener('click', async () => {
+  if (!buyingProductId) return;
+
+  const confirmBtn = document.getElementById('buyModalConfirmBtn');
+  const fbEl       = document.getElementById('buyModalFeedback');
+
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="animation:dashSpin 0.7s linear infinite"><path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" opacity="0.2"/></svg> Processando...`;
+
+  try {
+    const res  = await fetch(`${API_BASE}/api/shop/purchase`, {
+      method:  'POST',
+      headers: authHeaders(),
+      body:    JSON.stringify({ productId: buyingProductId, userId: user.id }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      fbEl.textContent = data.error || data.message || 'Erro ao processar compra.';
+      fbEl.className   = 'auth-feedback fb-error';
+      fbEl.style.display = 'block';
+      return;
+    }
+
+    /* sucesso: atualiza saldo e gift cards */
+    shopBalance = parseFloat(data.newBalance ?? (shopBalance - (allShopProducts.find(p => String(p.id) === String(buyingProductId))?.price ?? 0)));
+
+    /* recarrega gift cards e saldo */
+    shopLoaded = false;
+    await Promise.all([loadBalance(), loadGiftCards()]);
+
+    /* fecha modal e mostra código se veio na resposta */
+    closeBuyModal();
+
+    if (data.giftcard || data.code) {
+      const gc = data.giftcard ?? { ...data, name: data.name || 'Gift Card', code: data.code };
+      setTimeout(() => openCodeModal(gc.id || gc.code), 300);
+    } else {
+      /* se não veio o gift card diretamente, vai para aba meus gift cards */
+      setTimeout(() => switchTab('giftcards'), 300);
+    }
+
+  } catch (err) {
+    console.error('Erro na compra:', err);
+    fbEl.textContent   = 'Erro de conexão. Tente novamente.';
+    fbEl.className     = 'auth-feedback fb-error';
+    fbEl.style.display = 'block';
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"/></svg> Confirmar Compra`;
+    confirmBtn.style.opacity = '';
+  }
+});
 
 /* ══════════════════════════════════════════════════════════
    INICIALIZAÇÃO

@@ -320,6 +320,38 @@
     </div>
   </div>
 
+  <!-- ══════════════════════════ MODAL: COMPRAR PRODUTO ════════════════ -->
+  <div class="dash-modal-overlay" id="buyModal" style="display:none" role="dialog" aria-modal="true">
+    <div class="dash-modal">
+      <div class="dash-modal-header">
+        <h2 id="buyModalTitle">Comprar Gift Card</h2>
+        <button class="dash-modal-close" id="closeBuyModal" aria-label="Fechar">×</button>
+      </div>
+      <div class="dash-modal-body">
+        <div class="dash-buy-product-row">
+          <div class="dash-buy-icon" id="buyModalIcon"></div>
+          <div>
+            <strong id="buyModalName">—</strong>
+            <span id="buyModalPlatform" style="display:block;font-size:0.8rem;color:var(--text3);margin-top:2px">—</span>
+          </div>
+        </div>
+        <p id="buyModalDesc" class="dash-buy-desc"></p>
+        <div class="dash-modal-info" style="margin-top:16px">
+          <div class="dash-modal-row"><span>Preço:</span><strong id="buyModalPrice">—</strong></div>
+          <div class="dash-modal-row"><span>Seu saldo:</span><strong id="buyModalBalance">—</strong></div>
+        </div>
+        <div id="buyModalWarn" class="dash-buy-warn" style="display:none">
+          ⚠️ Saldo insuficiente para realizar esta compra.
+        </div>
+        <div id="buyModalFeedback" class="auth-feedback" style="display:none;margin-top:12px"></div>
+        <button class="dash-shop-buy-btn" id="buyModalConfirmBtn" style="width:100%;margin-top:20px;justify-content:center;font-size:1rem;padding:13px 0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="2"/></svg>
+          Confirmar Compra
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="env.js"></script>
   <script src="dashboard.js"></script>
 </body>
