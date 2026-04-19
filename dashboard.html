@@ -380,6 +380,9 @@
   .dash-buy-warn{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:8px;padding:10px 14px;font-size:.83rem;margin-top:14px}
   @media(max-width:600px){.dash-shop-grid{grid-template-columns:1fr}.dash-shop-filter-row{flex-direction:column;gap:8px}}
   @keyframes dashSpin{to{transform:rotate(360deg)}}
+  .auth-feedback{border-radius:8px;padding:10px 14px;font-size:.84rem;font-weight:600;margin-top:8px}
+  .auth-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171}
+  .auth-success{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#34d399}
   </style>
 
   <script>
@@ -506,7 +509,13 @@
         const descEl = document.getElementById('buyModalDesc');
         if (descEl) { descEl.textContent = p.description||''; descEl.style.display = p.description?'block':'none'; }
         const iconEl = document.getElementById('buyModalIcon');
-        if (iconEl) { iconEl.textContent = (p.name||'?').charAt(0).toUpperCase(); }
+        if (iconEl) {
+          if (p.imageUrl) {
+            iconEl.innerHTML = `<img src="${_esc(p.imageUrl)}" alt="${_esc(p.name||'')}" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.parentElement.innerHTML='${_esc((p.name||'?').charAt(0).toUpperCase())}'" />`;
+          } else {
+            iconEl.textContent = (p.name||'?').charAt(0).toUpperCase();
+          }
+        }
         const warnEl = document.getElementById('buyModalWarn');
         const confirmBtn = document.getElementById('buyModalConfirmBtn');
         if (warnEl && confirmBtn) {
@@ -525,6 +534,133 @@
         modal._pid = pid;
       }
     }
+
+    /* ── BOTÃO CONFIRMAR COMPRA ─────────────────────────────── */
+    (function _setupBuyConfirm() {
+      const confirmBtn = document.getElementById('buyModalConfirmBtn');
+      if (!confirmBtn || confirmBtn._patchedBuy) return;
+      confirmBtn._patchedBuy = true;
+
+      confirmBtn.addEventListener('click', async function () {
+        /* pega pid guardado no _openBuy */
+        const modal = document.getElementById('buyModal');
+        const pid   = modal && (modal._pid || window._buyPid);
+        if (!pid) return;
+
+        const p = _products.find(x => String(x.id) === String(pid));
+        if (!p) return;
+
+        const fbEl = document.getElementById('buyModalFeedback');
+        const warnEl = document.getElementById('buyModalWarn');
+
+        /* resolve token/user a partir das variáveis globais do dashboard.js */
+        const _tok  = (typeof token !== 'undefined' && token)
+          || localStorage.getItem('pglm_token') || '';
+        const _uid  = (typeof user  !== 'undefined' && user && user.id)
+          || (() => { try { return JSON.parse(localStorage.getItem('pglm_user')||'{}').id; } catch { return null; } })();
+
+        if (!_tok || !_uid) {
+          if (fbEl) {
+            fbEl.textContent = 'Sessão expirada. Faça login novamente.';
+            fbEl.className   = 'auth-feedback auth-error';
+            fbEl.style.display = 'block';
+          }
+          return;
+        }
+
+        /* verifica saldo */
+        const curBal = typeof shopBalance !== 'undefined' ? shopBalance : 0;
+        const price  = parseFloat(p.price || 0);
+        if (curBal < price) {
+          if (warnEl) warnEl.style.display = 'block';
+          confirmBtn.disabled = true;
+          confirmBtn.style.opacity = '0.5';
+          if (fbEl) {
+            fbEl.textContent   = `Saldo insuficiente. Você tem ${parseFloat(curBal).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} e o produto custa ${price.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}.`;
+            fbEl.className     = 'auth-feedback auth-error';
+            fbEl.style.display = 'block';
+          }
+          return;
+        }
+
+        /* estado de carregando */
+        confirmBtn.disabled = true;
+        const _origHtml = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="animation:dashSpin 0.7s linear infinite"><path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" opacity="0.2"/></svg> Processando...`;
+        if (fbEl) { fbEl.style.display='none'; fbEl.textContent=''; }
+
+        try {
+          const res  = await fetch(_API + '/api/shop/purchase', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${_tok}` },
+            body:    JSON.stringify({ productId: Number(pid), userId: Number(_uid) }),
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok || data?.ok === false) {
+            /* erro de saldo insuficiente vindo do servidor */
+            const isInsuf = res.status === 400 || (data?.error||'').toLowerCase().includes('insuf');
+            if (fbEl) {
+              fbEl.textContent   = data?.error || (isInsuf ? 'Saldo insuficiente para realizar esta compra.' : 'Erro ao processar a compra. Tente novamente.');
+              fbEl.className     = 'auth-feedback auth-error';
+              fbEl.style.display = 'block';
+            }
+            if (isInsuf && warnEl) warnEl.style.display = 'block';
+            confirmBtn.disabled      = false;
+            confirmBtn.style.opacity = '';
+            confirmBtn.innerHTML     = _origHtml;
+            return;
+          }
+
+          /* ── SUCESSO ─────────────────────────────────────────── */
+          /* atualiza saldo global */
+          const newBal = parseFloat(data?.shopBalance ?? (curBal - price));
+          if (typeof shopBalance !== 'undefined') {
+            // eslint-disable-next-line no-global-assign
+            try { window.shopBalance = newBal; } catch {}
+          }
+          /* atualiza elementos de saldo na UI */
+          const fmtBal = newBal.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+          ['statShopBalance','balanceValue','buyModalBalance'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = fmtBal;
+          });
+
+          /* sucesso no modal */
+          confirmBtn.innerHTML     = '✅ Compra realizada!';
+          confirmBtn.style.opacity = '0.7';
+          if (fbEl) {
+            fbEl.textContent   = data?.message || 'Compra realizada com sucesso! Verifique seus Gift Cards.';
+            fbEl.className     = 'auth-feedback auth-success';
+            fbEl.style.display = 'block';
+          }
+
+          /* recarrega gift cards e histórico após 1.5s e fecha modal */
+          setTimeout(async () => {
+            if (typeof loadBalance    === 'function') await loadBalance().catch(() => {});
+            if (typeof loadGiftCards  === 'function') await loadGiftCards().catch(() => {});
+            /* fecha modal */
+            const modalEl = document.getElementById('buyModal');
+            if (modalEl) { modalEl.style.display = 'none'; document.body.style.overflow = ''; }
+            /* restaura botão */
+            confirmBtn.innerHTML     = _origHtml;
+            confirmBtn.disabled      = false;
+            confirmBtn.style.opacity = '';
+            if (fbEl) { fbEl.style.display='none'; fbEl.textContent=''; }
+          }, 1800);
+
+        } catch (err) {
+          if (fbEl) {
+            fbEl.textContent   = 'Erro de conexão. Verifique sua internet e tente novamente.';
+            fbEl.className     = 'auth-feedback auth-error';
+            fbEl.style.display = 'block';
+          }
+          confirmBtn.disabled      = false;
+          confirmBtn.style.opacity = '';
+          confirmBtn.innerHTML     = _origHtml;
+        }
+      });
+    })();
 
     /* expõe funções globalmente */
     window.loadShopProducts   = _loadProducts;
