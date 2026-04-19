@@ -498,13 +498,26 @@
       }
     }
 
-    /* expõe funções globalmente para sobrescrever as do dashboard.js antigo */
+    /* expõe funções globalmente */
     window.loadShopProducts   = _loadProducts;
     window.renderShopProducts = _renderProducts;
     window._lojaLoad = () => { _loaded = false; _loadProducts(); };
 
-    /* reativa listeners dos filtros caso o dashboard.js antigo não tenha */
+    /* patch do switchTab: versão antiga não chama loadShopProducts para aba loja */
+    const _origSwitchTab = window.switchTab;
+    window.switchTab = function(tabId) {
+      if (_origSwitchTab) _origSwitchTab(tabId);
+      if (tabId === 'loja') _loadProducts();
+    };
+
+    /* fallback: listener direto no botão da sidebar caso switchTab não funcione */
     document.addEventListener('DOMContentLoaded', () => {
+      const lojaBtn = document.querySelector('.dash-nav-item[data-tab="loja"]');
+      if (lojaBtn) {
+        lojaBtn.addEventListener('click', () => {
+          setTimeout(_loadProducts, 50); /* aguarda tab ficar ativa */
+        });
+      }
       document.getElementById('shopSearch')?.addEventListener('input',  _renderProducts);
       document.getElementById('shopCatFilter')?.addEventListener('change', _renderProducts);
     });
